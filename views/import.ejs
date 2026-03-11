@@ -1,0 +1,47 @@
+<% if (results) { %>
+<div class="card mb-4">
+  <div class="card-body">
+    <h2 class="text-lg font-bold mb-2">Import Results</h2>
+    <div class="flex flex-wrap gap-4 text-sm">
+      <div><span class="text-secondary">Clans created:</span> <strong><%= results.clansCreated %></strong></div>
+      <div><span class="text-secondary">Players added:</span> <strong><%= results.playersAdded %></strong></div>
+      <div><span class="text-secondary">Seeder rewards:</span> <strong><%= results.seedersAdded %></strong></div>
+      <div><span class="text-secondary">Skipped:</span> <strong><%= results.skipped %></strong></div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<div class="card">
+  <div class="card-body">
+    <h2 class="text-lg font-bold mb-4">Import from Admins.cfg</h2>
+    <p class="text-sm text-secondary mb-4">
+      Paste whitelist data in Squad Admins.cfg format. Lines matching
+      <code>Admin=&lt;steamid&gt;:Whitelist // [Tag] Name</code> will be imported.
+      <code>[Seeder]</code> entries become seeding rewards; all others become clan players.
+    </p>
+
+    <form method="POST" action="/import">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="mb-4">
+        <label class="block text-sm font-bold mb-1" for="whitelist_data">Whitelist Data</label>
+        <textarea id="whitelist_data" name="whitelist_data" rows="16" class="input-field w-full font-mono text-sm" placeholder="Group=Whitelist:reserve&#10;Admin=76561198000000000:Whitelist // [ClanTag] PlayerName&#10;Admin=76561198000000001:Whitelist // [Seeder] PlayerName" required></textarea>
+      </div>
+
+      <div class="flex flex-wrap gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-bold mb-1" for="seeder_days">Seeder Reward Duration (days)</label>
+          <input type="number" id="seeder_days" name="seeder_days" value="<%= rewardDays %>" min="1" class="input-field w-32">
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1" for="default_player_limit">Default Clan Player Limit</label>
+          <input type="number" id="default_player_limit" name="default_player_limit" value="0" min="0" class="input-field w-32">
+          <div class="text-xs text-secondary mt-1">For newly created clans (0 = unlimited)</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-accent">Import</button>
+    </form>
+  </div>
+</div>

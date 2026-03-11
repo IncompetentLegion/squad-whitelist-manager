@@ -1,0 +1,65 @@
+<div class="bg-surface border border-border rounded-lg p-4 mb-6">
+  <h2 class="text-lg font-bold mb-3">Add Clan</h2>
+  <form method="POST" action="/clans" class="flex flex-wrap gap-3 items-end">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div>
+      <label class="block text-secondary text-sm mb-1">Name</label>
+      <input type="text" name="name" required placeholder="IL" class="input-field w-40">
+    </div>
+    <div>
+      <label class="block text-secondary text-sm mb-1">Player Limit</label>
+      <div class="flex items-center gap-2">
+        <input type="number" name="player_limit" value="25" min="0" class="input-field w-24">
+        <span class="text-xs text-secondary">0 = unlimited</span>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-accent">Add Clan</button>
+  </form>
+</div>
+
+<% if (clans.length === 0) { %>
+<p class="text-secondary">No clans yet.</p>
+<% } else { %>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <% clans.forEach(clan => { %>
+  <div class="card">
+    <div class="card-view">
+      <div class="card-body">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-bold text-lg"><a href="/players?clan=<%= clan.id %>" class="text-accent hover:underline"><%= clan.name %></a></h3>
+          <span class="text-sm text-secondary"><%= clan.player_count %><%= clan.player_limit > 0 ? ' / ' + clan.player_limit : '' %> players</span>
+        </div>
+        <div class="text-xs text-secondary">
+          Manager: <% if (managerMap[clan.id] && managerMap[clan.id].length) { %><span class="text-primary"><%= managerMap[clan.id].join(', ') %></span><% } else { %>None<% } %>
+        </div>
+      </div>
+    </div>
+    <div id="clan-edit-<%= clan.id %>" class="card-edit">
+      <div class="card-body">
+        <form method="POST" action="/clans/<%= clan.id %>/edit" class="flex flex-wrap gap-3 items-end">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="block text-secondary text-xs mb-1">Name</label>
+            <input type="text" name="name" value="<%= clan.name %>" class="input-field text-sm w-28">
+          </div>
+<div>
+            <label class="block text-secondary text-xs mb-1">Limit</label>
+            <input type="number" name="player_limit" value="<%= clan.player_limit %>" min="0" class="input-field text-sm w-20">
+          </div>
+          <button type="submit" class="btn btn-sm btn-accent">Save</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="toggleEdit('clan-edit-<%= clan.id %>')">Cancel</button>
+        </form>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button type="button" class="action-link action-link--edit" onclick="toggleEdit('clan-edit-<%= clan.id %>')">Edit</button>
+      <span class="sep">|</span>
+      <form method="POST" action="/clans/<%= clan.id %>/delete" style="display:inline" onsubmit="return confirmDelete('clan <%= clan.name %>')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="action-link action-link--danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  <% }) %>
+</div>
+<% } %>

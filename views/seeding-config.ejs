@@ -1,0 +1,52 @@
+<div class="grid grid-cols-1 md:grid-cols-2" style="gap: 2rem;">
+  <div>
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <form method="POST" action="/seeding/config">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="enabled" class="accent-accent" <%= enabled ? 'checked' : '' %>>
+            <span>Enable Seeding Rewards</span>
+          </label>
+        </div>
+        <div class="mb-4">
+          <label class="block text-secondary text-sm mb-1">Minutes Needed for Reward</label>
+          <input type="number" name="points_needed" value="<%= pointsNeeded %>" min="1" class="input-field w-32">
+        </div>
+        <div class="mb-4">
+          <label class="block text-secondary text-sm mb-1">Reward Duration (days)</label>
+          <input type="number" name="reward_days" value="<%= rewardDays %>" min="1" class="input-field w-32">
+        </div>
+        <div class="mb-4">
+          <label class="block text-secondary text-sm mb-1">Min Players (seeding active)</label>
+          <input type="number" name="min_players" value="<%= minPlayers %>" min="0" class="input-field w-32">
+        </div>
+        <div class="mb-4">
+          <label class="block text-secondary text-sm mb-1">Max Players (seeding stops)</label>
+          <input type="number" name="max_players" value="<%= maxPlayers %>" min="1" class="input-field w-32">
+        </div>
+        <button type="submit" class="btn btn-accent">Save Configuration</button>
+      </form>
+    </div>
+  </div>
+
+  <div>
+    <div class="bg-surface border border-border rounded-lg p-6 mb-6">
+      <h3 class="font-bold mb-4">How It Works</h3>
+      <div class="text-secondary text-sm flex flex-col gap-3">
+        <p>The SquadJS plugin reports online players every <strong class="text-primary">60 seconds</strong>. Each report adds <strong class="text-primary">1 minute</strong> to every player on the server.</p>
+        <p>Minutes are only counted when the server player count is between <strong class="text-primary">Min Players</strong> and <strong class="text-primary">Max Players</strong> — this defines the "seeding" window.</p>
+        <p>When a player reaches the <strong class="text-primary">Minutes Needed</strong> threshold, they get a reserved slot for <strong class="text-primary">Reward Duration</strong> days and their progress resets to zero.</p>
+        <p>If they keep seeding and hit the threshold again, the reward expiry is <strong class="text-primary">renewed</strong>, not stacked. They always get a fresh window.</p>
+        <p>Expired rewards are automatically removed from the whitelist.</p>
+      </div>
+    </div>
+
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="font-bold mb-4">Current Settings</h3>
+      <div class="text-secondary text-sm">
+        <p>A player needs to seed for <strong class="text-primary"><%= pointsNeeded %> minutes</strong> to earn a <strong class="text-primary"><%= rewardDays %>-day</strong> reserved slot. Seeding counts when <strong class="text-primary"><%= minPlayers %>–<%= maxPlayers %></strong> players are online.</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Database
+*.db
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tar
+
+# Editors
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Logs
+*.log
+npm-debug.log*

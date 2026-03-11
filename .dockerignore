@@ -1,0 +1,8 @@
+node_modules
+*.db
+*.tar
+.env
+.git
+.claude
+squadjs-plugin
+README.md

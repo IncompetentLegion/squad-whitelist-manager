@@ -1,0 +1,10 @@
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="flash flash-error" onclick="this.remove()">
+  <%= error %>
+</div>
+<% } %>
+<% if (typeof success !== 'undefined' && success) { %>
+<div class="flash flash-success" onclick="this.remove()">
+  <%= success %>
+</div>
+<% } %>

@@ -1,0 +1,122 @@
+<div class="bg-surface border border-border rounded-lg p-4 mb-6">
+  <h2 class="text-lg font-bold mb-3">Add Player</h2>
+  <form method="POST" action="/players" class="flex flex-wrap gap-3 items-end">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div>
+      <label class="block text-secondary text-sm mb-1">Steam ID</label>
+      <input type="text" name="steam_id" required placeholder="76561198..." pattern="\d{17}" title="17-digit Steam ID" class="input-field w-48">
+    </div>
+    <div>
+      <label class="block text-secondary text-sm mb-1">Name (optional)</label>
+      <input type="text" name="player_name" placeholder="PlayerName" class="input-field w-40">
+    </div>
+    <% if (isAdmin) { %>
+    <div>
+      <label class="block text-secondary text-sm mb-1">Clan (optional)</label>
+      <select name="clan_id" class="input-field w-48">
+        <option value="">None (Standalone)</option>
+        <% clans.forEach(c => { %>
+        <option value="<%= c.id %>"><%= c.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <% } %>
+    <div>
+      <label class="block text-secondary text-sm mb-1">Expires (optional)</label>
+      <input type="date" name="expires_at" class="input-field w-40">
+    </div>
+    <div>
+      <label class="block text-secondary text-sm mb-1">Note (optional)</label>
+      <input type="text" name="note" placeholder="Note" class="input-field w-48">
+    </div>
+    <button type="submit" class="btn btn-accent">Add Player</button>
+  </form>
+</div>
+
+<% if (!isAdmin && userClan) { %>
+<div class="mb-4 text-secondary text-sm">
+  Clan: <strong class="text-primary"><%= userClan.name %></strong>
+  &mdash; <%= typeof clanPlayerCount !== 'undefined' ? clanPlayerCount : 0 %><%= userClan.player_limit > 0 ? ' / ' + userClan.player_limit : '' %> players
+</div>
+<% } %>
+
+<div class="flex flex-wrap gap-3 items-end mb-4">
+  <form method="GET" action="/players" class="flex flex-wrap gap-3 items-end">
+    <input type="text" name="search" value="<%= search %>" placeholder="Search name or Steam ID..." class="input-field w-64">
+    <% if (isAdmin) { %>
+    <select name="clan" class="input-field w-40">
+      <option value="">All Clans</option>
+      <option value="none" <%= clanFilter === 'none' ? 'selected' : '' %>>Standalone</option>
+      <% clans.forEach(c => { %>
+      <option value="<%= c.id %>" <%= clanFilter == c.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <% } %>
+    <button type="submit" class="btn btn-accent">Filter</button>
+    <a href="/players" class="btn btn-secondary">Clear</a>
+  </form>
+</div>
+
+<% if (players.length === 0) { %>
+<p class="text-secondary">No players found.</p>
+<% } else { %>
+<div class="text-sm text-secondary mb-2"><%= players.length %> player(s)</div>
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Steam ID</th>
+        <th>Name</th>
+        <% if (isAdmin) { %><th>Clan</th><% } %>
+        <th>Expires</th>
+        <th>Note</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% players.forEach(p => { %>
+      <tr>
+        <td class="font-mono text-sm"><%= p.steam_id %></td>
+        <td><%= p.player_name || '-' %></td>
+        <% if (isAdmin) { %>
+        <td class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || '—' %></td>
+        <% } %>
+        <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td class="text-secondary text-sm"><%= p.note || '' %></td>
+        <td>
+          <div class="actions">
+            <button type="button" class="action-link action-link--edit" onclick="toggleEdit('pe-<%= p.id %>')">Edit</button>
+            <span class="sep">|</span>
+            <form method="POST" action="/players/<%= p.id %>/delete" style="display:inline" onsubmit="return confirmDelete('this player')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="action-link action-link--danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <tr id="pe-<%= p.id %>" class="edit-row">
+        <td colspan="<%= isAdmin ? 7 : 6 %>">
+          <form method="POST" action="/players/<%= p.id %>/edit" class="flex flex-wrap gap-3 items-end">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div>
+              <label class="block text-secondary text-xs mb-1">Name</label>
+              <input type="text" name="player_name" value="<%= p.player_name || '' %>" placeholder="Name" class="input-field text-sm w-36">
+            </div>
+            <div>
+              <label class="block text-secondary text-xs mb-1">Expires</label>
+              <input type="date" name="expires_at" value="<%= p.expires_at ? p.expires_at.split(' ')[0] : '' %>" class="input-field text-sm w-40">
+            </div>
+            <div>
+              <label class="block text-secondary text-xs mb-1">Note</label>
+              <input type="text" name="note" value="<%= p.note || '' %>" placeholder="Note" class="input-field text-sm w-36">
+            </div>
+            <button type="submit" class="btn btn-sm btn-accent">Save</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleEdit('pe-<%= p.id %>')">Cancel</button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>

@@ -1,0 +1,95 @@
+<% if (isAdmin) { %>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8" style="grid-template-columns: repeat(4, 1fr)">
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Total Players</div>
+    <div class="text-2xl font-bold mt-1"><%= stats.totalPlayers %></div>
+  </div>
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Total Clans</div>
+    <div class="text-2xl font-bold mt-1"><%= stats.totalClans %></div>
+  </div>
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Seeding Whitelists</div>
+    <div class="text-2xl font-bold mt-1"><%= stats.activeSeedingRewards %></div>
+  </div>
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Expiring Soon (7d)</div>
+    <div class="text-2xl font-bold mt-1 <%= stats.expiringSoon > 0 ? 'text-warning' : '' %>"><%= stats.expiringSoon %></div>
+  </div>
+</div>
+
+<h2 class="text-lg font-bold mb-4">Recent Additions</h2>
+<% if (stats.recentPlayers.length === 0) { %>
+<p class="text-secondary">No players yet.</p>
+<% } else { %>
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Steam ID</th>
+        <th>Name</th>
+        <th>Clan</th>
+        <th>Expires</th>
+        <th>Added</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% stats.recentPlayers.forEach(p => { %>
+      <tr>
+        <td class="font-mono text-sm"><%= p.steam_id %></td>
+        <td><%= p.player_name || '-' %></td>
+        <td class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || 'Standalone' %></td>
+        <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<% } else { %>
+
+<% if (!stats.clan) { %>
+<p class="text-secondary">No clan assigned. Contact an admin.</p>
+<% } else { %>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Clan</div>
+    <div class="text-2xl font-bold mt-1"><%= stats.clan.name %></div>
+  </div>
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Players</div>
+    <div class="text-2xl font-bold mt-1"><%= stats.totalPlayers %><% if (stats.clan.player_limit > 0) { %> / <%= stats.clan.player_limit %><% } %></div>
+  </div>
+</div>
+
+<h2 class="text-lg font-bold mb-4">Recent Additions</h2>
+<% if (stats.recentPlayers.length === 0) { %>
+<p class="text-secondary">No players yet.</p>
+<% } else { %>
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Steam ID</th>
+        <th>Name</th>
+        <th>Expires</th>
+        <th>Added</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% stats.recentPlayers.forEach(p => { %>
+      <tr>
+        <td class="font-mono text-sm"><%= p.steam_id %></td>
+        <td><%= p.player_name || '-' %></td>
+        <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+<% } %>
+<% } %>

@@ -1,0 +1,15 @@
+services:
+  whitelist:
+    build: .
+    ports:
+      - "36419:36419"
+    volumes:
+      - whitelist-data:/data
+    environment:
+      - DB_PATH=/data/whitelist.db
+      - NODE_ENV=production
+      # - PORT=36419
+    restart: unless-stopped
+
+volumes:
+  whitelist-data:

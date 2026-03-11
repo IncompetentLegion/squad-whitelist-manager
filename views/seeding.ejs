@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seeding Leaderboard - Incompetent Legion</title>
+  <link rel="icon" type="image/webp" href="/assets/logores.webp">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body.seeding-page {
+      font-family: 'Inter', sans-serif;
+      background: #0f0f0f;
+      color: #e2e4ea;
+    }
+    .seeding-page .seeding-header {
+      border-bottom: 1px solid #2d3244;
+      padding: 1.25rem 0;
+      margin-bottom: 2rem;
+    }
+    .seeding-page .seeding-logo {
+      height: 2.5rem;
+      width: 2.5rem;
+      object-fit: contain;
+    }
+    .seeding-page .seeding-brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+    .seeding-page .seeding-brand-top {
+      font-size: 1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      color: #e2e4ea;
+    }
+    .seeding-page .seeding-brand-bottom {
+      font-size: 0.6rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: #e10600;
+    }
+    .seeding-page .seeding-title {
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .seeding-page .seeding-title span {
+      color: #e10600;
+    }
+    .seeding-page .seeding-subtitle {
+      color: #8b90a0;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .seeding-page .seeding-subtitle strong {
+      color: #e2e4ea;
+      font-weight: 700;
+    }
+    .seeding-page .seeding-nav-link {
+      font-size: 0.65rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #8b90a0;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .seeding-page .seeding-nav-link:hover {
+      color: #e10600;
+      text-decoration: none;
+    }
+    .seeding-page .seeding-search {
+      background: #1a1a1a;
+      border: 1px solid #2d3244;
+      border-radius: 0;
+      color: #e2e4ea;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      padding: 0.625rem 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+      flex: 1;
+    }
+    .seeding-page .seeding-search:focus {
+      border-color: #e10600;
+    }
+    .seeding-page .seeding-search::placeholder {
+      color: #8b90a0;
+      opacity: 0.6;
+    }
+    .seeding-page .seeding-btn {
+      background: #e10600;
+      border: none;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.625rem 1.25rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .seeding-page .seeding-btn:hover {
+      background: #c40500;
+      text-decoration: none;
+    }
+    .seeding-page .seeding-btn-secondary {
+      background: #1a1a1a;
+      border: 1px solid #2d3244;
+      color: #8b90a0;
+    }
+    .seeding-page .seeding-btn-secondary:hover {
+      color: #e2e4ea;
+      background: #222;
+    }
+    .seeding-page .seeding-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .seeding-page .seeding-table th {
+      font-size: 0.65rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #8b90a0;
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 2px solid #e10600;
+    }
+    .seeding-page .seeding-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .seeding-page .seeding-table tbody tr:hover {
+      background: rgba(225, 6, 0, 0.04);
+    }
+    .seeding-page .seeding-rank {
+      font-weight: 900;
+      color: #8b90a0;
+    }
+    .seeding-page .seeding-rank-top {
+      color: #e10600;
+    }
+    .seeding-page .seeding-player-name {
+      font-weight: 700;
+    }
+    .seeding-page .seeding-steam {
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.8rem;
+      color: #8b90a0;
+    }
+    .seeding-page .seeding-lifetime {
+      color: #8b90a0;
+      font-weight: 500;
+    }
+    .seeding-page .seeding-progress-bar {
+      width: 120px;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+    .seeding-page .seeding-progress-fill {
+      height: 100%;
+      background: #e10600;
+      transition: width 0.3s ease;
+    }
+    .seeding-page .seeding-progress-text {
+      font-size: 0.75rem;
+      color: #8b90a0;
+      font-weight: 500;
+    }
+    .seeding-page .seeding-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.65rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .seeding-page .seeding-badge-whitelisted {
+      background: rgba(63, 185, 80, 0.15);
+      color: #3fb950;
+    }
+    .seeding-page .seeding-badge-seeding {
+      background: rgba(225, 6, 0, 0.15);
+      color: #e10600;
+    }
+    .seeding-page .seeding-section-title {
+      font-size: 2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .seeding-page .seeding-section-title span {
+      color: #e10600;
+    }
+    .seeding-page .seeding-section-wrapper {
+      margin-bottom: 4rem;
+    }
+    .seeding-page .seeding-card {
+      background: #1a1a1a;
+      border: 2px solid #2d3244;
+      padding: 2rem;
+      box-shadow: 8px 8px 0px rgba(225, 6, 0, 0.05);
+    }
+    .seeding-page .seeding-clan-name {
+      font-weight: 700;
+    }
+    .seeding-page .seeding-clan-stat {
+      color: #8b90a0;
+      font-weight: 500;
+    }
+    .seeding-page .seeding-footer {
+      border-top: 1px solid #2d3244;
+      padding: 1.5rem 0;
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.6rem;
+      font-weight: 900;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+    }
+  </style>
+</head>
+<body class="seeding-page min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="seeding-header flex items-center justify-between">
+      <a href="https://incompetentlegion.com" class="flex items-center gap-3" style="text-decoration:none">
+        <img src="/assets/logores.webp" alt="IL" class="seeding-logo">
+        <div class="seeding-brand">
+          <span class="seeding-brand-top">Incompetent</span>
+          <span class="seeding-brand-bottom">Legion</span>
+        </div>
+      </a>
+      <div class="flex items-center gap-4">
+        <a href="https://incompetentlegion.com" class="seeding-nav-link">Home</a>
+        <a href="https://incompetentlegion.com/rules" class="seeding-nav-link">Rules</a>
+        <a href="https://discord.gg/2xKx4NcwRm" class="seeding-nav-link">Discord</a>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div class="mb-8">
+      <h1 class="seeding-title">Seeding <span>Leaderboard</span></h1>
+      <% if (!enabled) { %>
+      <p class="seeding-subtitle">Seeding rewards are currently disabled.</p>
+      <% } else { %>
+      <p class="seeding-subtitle">
+        Seed the server to earn a reserved slot. <strong><%= pointsNeeded %> minutes</strong> &rarr; <strong><%= rewardDays %> day</strong> whitelist.
+      </p>
+      <% } %>
+    </div>
+
+    <% if (enabled) { %>
+    <!-- Search -->
+    <form method="GET" action="/seeding" class="mb-6">
+      <div class="flex gap-2">
+        <input type="text" name="search" value="<%= search %>" placeholder="Search by name or Steam ID..." class="seeding-search">
+        <button type="submit" class="seeding-btn">Search</button>
+        <% if (search) { %><a href="/seeding" class="seeding-btn seeding-btn-secondary">Clear</a><% } %>
+      </div>
+    </form>
+
+    <% if (clanLeaderboard.length > 0) { %>
+    <!-- Clan Leaderboard -->
+    <div class="seeding-section-wrapper">
+      <h2 class="seeding-section-title">Clan <span>Rankings</span></h2>
+      <p class="seeding-subtitle" style="margin-bottom: 1.5rem;">Total seeding minutes contributed by clan members.</p>
+      <div class="seeding-card">
+        <div class="overflow-x-auto">
+          <table class="seeding-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Clan</th>
+                <th>Seeders</th>
+                <th>Total Lifetime</th>
+                <th>Avg / Player</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% clanLeaderboard.forEach((c, i) => { %>
+              <tr>
+                <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
+                <td class="seeding-clan-name"><%= c.name %></td>
+                <td class="seeding-clan-stat"><%= c.seeder_count %></td>
+                <td class="seeding-clan-stat"><%= c.total_lifetime_minutes %> min</td>
+                <td class="seeding-clan-stat"><%= c.seeder_count > 0 ? Math.round(c.total_lifetime_minutes / c.seeder_count) : 0 %> min</td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (points.length === 0) { %>
+    <p class="seeding-subtitle">No seeding data yet.</p>
+    <% } else { %>
+    <div class="seeding-section-wrapper">
+    <h2 class="seeding-section-title">Player <span>Leaderboard</span></h2>
+    <p class="seeding-subtitle" style="margin-bottom: 1.5rem;">Individual player seeding stats and progress.</p>
+    <div class="seeding-card">
+    <div class="overflow-x-auto">
+      <table class="seeding-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Lifetime</th>
+            <th>Next Reward</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% points.forEach((p, i) => { %>
+          <tr>
+            <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
+            <td class="seeding-player-name"><%= p.player_name || 'Unknown' %></td>
+            <td class="seeding-lifetime"><%= p.lifetime_points %> min</td>
+            <td>
+              <div class="flex items-center gap-2">
+                <div class="seeding-progress-bar">
+                  <div class="seeding-progress-fill" style="width: <%= Math.min(100, (p.points / pointsNeeded) * 100) %>%"></div>
+                </div>
+                <span class="seeding-progress-text"><%= p.points %>/<%= pointsNeeded %></span>
+              </div>
+            </td>
+            <td>
+              <% if (rewardedIds.has(p.steam_id)) { %>
+              <span class="seeding-badge seeding-badge-whitelisted">Whitelisted</span>
+              <% } else { %>
+              <span class="seeding-badge seeding-badge-seeding">Seeding</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    </div>
+    </div>
+    <% } %>
+    <% } %>
+
+    <div class="seeding-footer">Incompetent Legion</div>
+  </div>
+</body>
+</html>

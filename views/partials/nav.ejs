@@ -1,0 +1,29 @@
+<aside id="sidebar" class="fixed inset-y-0 left-0 w-56 bg-surface border-r border-border transform -translate-x-full md:translate-x-0 transition-transform z-30">
+  <div class="px-4 py-4 border-b border-border">
+    <a href="/" class="flex items-center gap-3" style="text-decoration:none">
+      <img src="/assets/logores.webp" alt="IL" style="height:2rem;width:2rem;object-fit:contain">
+      <div style="line-height:1;display:flex;flex-direction:column">
+        <span style="font-size:0.9rem;font-weight:900;letter-spacing:-0.03em;color:var(--text-primary)">INCOMPETENT</span>
+        <span style="font-size:0.55rem;font-weight:900;letter-spacing:0.2em;color:var(--accent)">LEGION</span>
+      </div>
+    </a>
+  </div>
+  <nav class="p-2 flex flex-col gap-1">
+    <a href="/" class="nav-link<%= typeof title !== 'undefined' && title === 'Dashboard' ? ' active' : '' %>">Dashboard</a>
+    <a href="/players" class="nav-link<%= typeof title !== 'undefined' && title === 'Players' ? ' active' : '' %>">Players</a>
+    <% if (user.role === 'admin') { %>
+    <a href="/clans" class="nav-link<%= typeof title !== 'undefined' && title === 'Clans' ? ' active' : '' %>">Clans</a>
+    <a href="/users" class="nav-link<%= typeof title !== 'undefined' && title === 'Users' ? ' active' : '' %>">Users</a>
+    <a href="/seeding/config" class="nav-link<%= typeof title !== 'undefined' && title === 'Seeding Configuration' ? ' active' : '' %>">Seeding Config</a>
+    <a href="/seeding/rewards" class="nav-link<%= typeof title !== 'undefined' && title === 'Seeding Whitelist' ? ' active' : '' %>">Seeding Whitelist</a>
+    <a href="/import" class="nav-link<%= typeof title !== 'undefined' && title === 'Import Whitelist' ? ' active' : '' %>">Import</a>
+    <a href="/api" class="nav-link<%= typeof title !== 'undefined' && title === 'API' ? ' active' : '' %>">API</a>
+    <% } %>
+    <a href="/seeding" class="nav-link" target="_blank">Seeding Board</a>
+    <hr class="border-border my-2">
+    <a href="/password" class="nav-link<%= typeof title !== 'undefined' && title === 'Change Password' ? ' active' : '' %>">Change Password</a>
+  </nav>
+</aside>
+<button id="sidebar-toggle" class="fixed top-4 left-4 z-40 md:hidden bg-surface border border-border rounded p-2 text-secondary hover:text-primary">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect y="3" width="20" height="2"/><rect y="9" width="20" height="2"/><rect y="15" width="20" height="2"/></svg>
+</button>

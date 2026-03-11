@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Squad Whitelist</title>
+  <link rel="icon" type="image/webp" href="/assets/logores.webp">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-page text-primary font-mono min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-sm mx-auto px-4">
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <div class="flex items-center justify-center gap-3 mb-2">
+        <img src="/assets/logores.webp" alt="IL" style="height:2.5rem;width:2.5rem;object-fit:contain">
+        <div style="line-height:1;display:flex;flex-direction:column">
+          <span style="font-size:1rem;font-weight:900;letter-spacing:-0.03em;color:var(--text-primary)">INCOMPETENT</span>
+          <span style="font-size:0.6rem;font-weight:900;letter-spacing:0.2em;color:var(--accent)">LEGION</span>
+        </div>
+      </div>
+      <p class="text-secondary text-sm text-center mb-2">Squad Whitelist Management</p>
+      <% if (!invite) { %>
+        <div class="flash flash-error mb-4"><%= error %></div>
+        <a href="/login" class="btn btn-secondary w-full text-center block">Go to Login</a>
+      <% } else { %>
+        <p class="text-secondary text-sm text-center mb-6">You've been invited as <strong class="text-primary"><%= invite.role %></strong><% if (invite.clan_name) { %> for <strong class="text-primary"><%= invite.clan_name %></strong><% } %></p>
+        <% if (error) { %>
+        <div class="flash flash-error mb-4"><%= error %></div>
+        <% } %>
+        <form method="POST" action="/invite/<%= invite.token %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="mb-4">
+            <label class="block text-secondary text-sm mb-1">Username</label>
+            <input type="text" name="username" required autofocus class="input-field">
+          </div>
+          <div class="mb-4">
+            <label class="block text-secondary text-sm mb-1">Password</label>
+            <input type="password" name="password" required minlength="6" class="input-field">
+          </div>
+          <div class="mb-6">
+            <label class="block text-secondary text-sm mb-1">Confirm Password</label>
+            <input type="password" name="password_confirm" required class="input-field">
+          </div>
+          <button type="submit" class="btn btn-accent w-full">Create Account</button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>
