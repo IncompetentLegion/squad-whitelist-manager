@@ -196,6 +196,10 @@
       background: rgba(225, 6, 0, 0.15);
       color: #e10600;
     }
+    .seeding-page .seeding-badge-clan {
+      background: rgba(139, 144, 160, 0.15);
+      color: #8b90a0;
+    }
     .seeding-page .seeding-section-title {
       font-size: 2rem;
       font-weight: 900;
@@ -357,7 +361,7 @@
           <% points.forEach((p, i) => { %>
           <tr>
             <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
-            <td class="seeding-player-name"><%= p.player_name || 'Unknown' %></td>
+            <td class="seeding-player-name"><%= p.player_name || 'Unknown' %><% if (p.clan_name) { %> <span class="seeding-badge seeding-badge-clan"><%= p.clan_name %></span><% } %></td>
             <td class="seeding-lifetime"><%= formatMinutes(p.lifetime_points) %></td>
             <td>
               <div class="flex items-center gap-2">

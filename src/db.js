@@ -331,7 +331,11 @@ function getActiveSeedingRewards() {
 }
 
 function getSeedingPoints() {
-  return all('SELECT * FROM seeding_points ORDER BY lifetime_points DESC');
+  return all(`SELECT sp.*, c.name as clan_name
+    FROM seeding_points sp
+    LEFT JOIN players p ON sp.steam_id = p.steam_id
+    LEFT JOIN clans c ON p.clan_id = c.id
+    ORDER BY sp.lifetime_points DESC LIMIT 50`);
 }
 
 function upsertSeedingPoints(steamId, playerName) {
@@ -427,13 +431,17 @@ function searchPlayers(query, clanId) {
 }
 
 function searchSeedingPoints(query) {
-  let sql = 'SELECT * FROM seeding_points WHERE 1=1';
+  let sql = `SELECT sp.*, c.name as clan_name
+    FROM seeding_points sp
+    LEFT JOIN players p ON sp.steam_id = p.steam_id
+    LEFT JOIN clans c ON p.clan_id = c.id
+    WHERE 1=1`;
   const params = [];
   if (query) {
-    sql += ' AND (steam_id LIKE ? OR player_name LIKE ?)';
+    sql += ' AND (sp.steam_id LIKE ? OR sp.player_name LIKE ?)';
     params.push(`%${query}%`, `%${query}%`);
   }
-  sql += ' ORDER BY lifetime_points DESC';
+  sql += ' ORDER BY sp.lifetime_points DESC';
   return all(sql, params);
 }
 
