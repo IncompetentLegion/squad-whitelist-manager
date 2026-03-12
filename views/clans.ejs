@@ -29,6 +29,9 @@
           <h3 class="font-bold text-lg"><a href="/players?clan=<%= clan.id %>" class="text-accent hover:underline"><%= clan.name %></a></h3>
           <span class="text-sm text-secondary"><%= clan.player_count %><%= clan.player_limit > 0 ? ' / ' + clan.player_limit : '' %> players</span>
         </div>
+        <div class="text-xs text-secondary mb-1">
+          Seeding Time: <span class="text-primary"><%= formatMinutes(clan.total_seeding_minutes) %></span>
+        </div>
         <div class="text-xs text-secondary">
           Manager: <% if (managerMap[clan.id] && managerMap[clan.id].length) { %><span class="text-primary"><%= managerMap[clan.id].join(', ') %></span><% } else { %>None<% } %>
         </div>

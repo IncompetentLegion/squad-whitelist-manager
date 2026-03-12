@@ -261,8 +261,10 @@ function getClanPlayerCount(clanId) {
 
 function getPlayerCountByClan() {
   return all(`
-    SELECT c.id, c.name, c.player_limit, COUNT(p.id) as player_count
+    SELECT c.id, c.name, c.player_limit, COUNT(DISTINCT p.id) as player_count,
+           COALESCE(SUM(sp.lifetime_points), 0) as total_seeding_minutes
     FROM clans c LEFT JOIN players p ON c.id = p.clan_id
+    LEFT JOIN seeding_points sp ON p.steam_id = sp.steam_id
     GROUP BY c.id ORDER BY c.name
   `);
 }
@@ -465,6 +467,11 @@ function getDashboardStats() {
 function getClanDashboardStats(clanId) {
   const totalPlayers = get('SELECT COUNT(*) as count FROM players WHERE clan_id = ?', [clanId]).count;
   const clan = getClan(clanId);
+  const totalSeedingMinutes = get(`
+    SELECT COALESCE(SUM(sp.lifetime_points), 0) as total
+    FROM players p JOIN seeding_points sp ON p.steam_id = sp.steam_id
+    WHERE p.clan_id = ?
+  `, [clanId]).total;
   const recentPlayers = all(`
     SELECT p.*, c.name as clan_name, COALESCE(sp.lifetime_points, 0) as lifetime_minutes
     FROM players p LEFT JOIN clans c ON p.clan_id = c.id
@@ -472,7 +479,7 @@ function getClanDashboardStats(clanId) {
     WHERE p.clan_id = ?
     ORDER BY p.created_at DESC LIMIT 10
   `, [clanId]);
-  return { totalPlayers, clan, recentPlayers };
+  return { totalPlayers, clan, totalSeedingMinutes, recentPlayers };
 }
 
 function createInvite(token, role, clanId, expiresAt, createdBy) {

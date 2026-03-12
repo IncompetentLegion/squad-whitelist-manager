@@ -200,6 +200,22 @@
       background: rgba(139, 144, 160, 0.15);
       color: #8b90a0;
     }
+    .seeding-page .seeding-tooltip {
+      display: none;
+      position: fixed;
+      width: 260px;
+      padding: 0.75rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #2d3244;
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #8b90a0;
+      line-height: 1.6;
+      z-index: 1000;
+    }
+    .seeding-page .seeding-tooltip.visible {
+      display: block;
+    }
     .seeding-page .seeding-section-title {
       font-size: 2rem;
       font-weight: 900;
@@ -353,7 +369,7 @@
             <th>#</th>
             <th>Player</th>
             <th>Lifetime</th>
-            <th>Whitelist Progress</th>
+            <th>Whitelist Progress <span class="seeding-help-toggle" id="progress-tip-toggle">?</span></th>
             <th>Status</th>
           </tr>
         </thead>
@@ -390,5 +406,24 @@
 
     <div class="seeding-footer">Incompetent Legion</div>
   </div>
+  <div class="seeding-tooltip" id="progress-tip">Your progress toward a whitelist slot. Already whitelisted? Filling this up again extends it.</div>
+  <script>
+  (function() {
+    var toggle = document.getElementById('progress-tip-toggle');
+    var tip = document.getElementById('progress-tip');
+    if (!toggle || !tip) return;
+    function position() {
+      var r = toggle.getBoundingClientRect();
+      tip.style.left = Math.max(8, r.left + r.width / 2 - 130) + 'px';
+      tip.style.top = (r.top - tip.offsetHeight - 8) + 'px';
+    }
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var open = tip.classList.toggle('visible');
+      if (open) position();
+    });
+    document.addEventListener('click', function() { tip.classList.remove('visible'); });
+  })();
+  </script>
 </body>
 </html>

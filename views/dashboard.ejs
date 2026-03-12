@@ -64,7 +64,7 @@
 <% if (!stats.clan) { %>
 <p class="text-secondary">No clan assigned. Contact an admin.</p>
 <% } else { %>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
   <div class="bg-surface border border-border rounded-lg p-4">
     <div class="text-secondary text-sm">Clan</div>
     <div class="text-2xl font-bold mt-1"><%= stats.clan.name %></div>
@@ -72,6 +72,10 @@
   <div class="bg-surface border border-border rounded-lg p-4">
     <div class="text-secondary text-sm">Players</div>
     <div class="text-2xl font-bold mt-1"><%= stats.totalPlayers %><% if (stats.clan.player_limit > 0) { %> / <%= stats.clan.player_limit %><% } %></div>
+  </div>
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Total Seeding Time</div>
+    <div class="text-2xl font-bold mt-1"><%= formatMinutes(stats.totalSeedingMinutes) %></div>
   </div>
 </div>
 
