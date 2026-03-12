@@ -160,9 +160,13 @@ router.get('/progress/:apiKey/:steamId', (req, res) => {
 // Admin rewards page
 router.get('/rewards', requireAuth, requireAdmin, (req, res) => {
   const rewards = db.getActiveSeedingRewards();
+  const search = req.query.search || '';
+  const tab = req.query.tab || '';
+  const seeders = db.searchSeedingPoints(tab === 'seeders' ? search : '');
+  const pointsNeeded = db.getConfigValue('seeding_points_needed', 60);
   res.render('seeding-rewards', {
     title: 'Seeding Whitelist',
-    rewards
+    rewards, seeders, pointsNeeded, search, tab
   });
 });
 

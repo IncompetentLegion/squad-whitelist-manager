@@ -404,7 +404,9 @@ function setConfigValue(key, value) {
 
 function searchPlayers(query, clanId) {
   let sql = `
-    SELECT p.*, c.name as clan_name    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    SELECT p.*, c.name as clan_name, COALESCE(sp.lifetime_points, 0) as lifetime_minutes
+    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    LEFT JOIN seeding_points sp ON p.steam_id = sp.steam_id
     WHERE 1=1
   `;
   const params = [];
@@ -424,6 +426,17 @@ function searchPlayers(query, clanId) {
   return all(sql, params);
 }
 
+function searchSeedingPoints(query) {
+  let sql = 'SELECT * FROM seeding_points WHERE 1=1';
+  const params = [];
+  if (query) {
+    sql += ' AND (steam_id LIKE ? OR player_name LIKE ?)';
+    params.push(`%${query}%`, `%${query}%`);
+  }
+  sql += ' ORDER BY lifetime_points DESC';
+  return all(sql, params);
+}
+
 function getDashboardStats() {
   const totalPlayers = get('SELECT COUNT(*) as count FROM players').count;
   const totalClans = get('SELECT COUNT(*) as count FROM clans').count;
@@ -432,7 +445,9 @@ function getDashboardStats() {
     WHERE expires_at IS NOT NULL AND expires_at > datetime('now') AND expires_at <= datetime('now', '+7 days')
   `).count;
   const recentPlayers = all(`
-    SELECT p.*, c.name as clan_name    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    SELECT p.*, c.name as clan_name, COALESCE(sp.lifetime_points, 0) as lifetime_minutes
+    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    LEFT JOIN seeding_points sp ON p.steam_id = sp.steam_id
     ORDER BY p.created_at DESC LIMIT 10
   `);
   const activeSeedingRewards = get("SELECT COUNT(*) as count FROM seeding_rewards WHERE expires_at > datetime('now')").count;
@@ -443,7 +458,9 @@ function getClanDashboardStats(clanId) {
   const totalPlayers = get('SELECT COUNT(*) as count FROM players WHERE clan_id = ?', [clanId]).count;
   const clan = getClan(clanId);
   const recentPlayers = all(`
-    SELECT p.*, c.name as clan_name    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    SELECT p.*, c.name as clan_name, COALESCE(sp.lifetime_points, 0) as lifetime_minutes
+    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    LEFT JOIN seeding_points sp ON p.steam_id = sp.steam_id
     WHERE p.clan_id = ?
     ORDER BY p.created_at DESC LIMIT 10
   `, [clanId]);
@@ -502,6 +519,6 @@ module.exports = {
   getActivePlayersForWhitelist, getActivePlayersByClanName, getActiveSeedingRewards,
   getSeedingPoints, upsertSeedingPoints, getSeedingPointsForPlayer, createSeedingReward, resetSeedingPoints, getSeedingReward, deleteSeedingReward, deleteExpiredSeedingRewards,
   getConfigValue, setConfigValue,
-  searchPlayers, getDashboardStats, getClanDashboardStats, getClanSeedingLeaderboard,
+  searchPlayers, searchSeedingPoints, getDashboardStats, getClanDashboardStats, getClanSeedingLeaderboard,
   createInvite, getInviteByToken, markInviteUsed, getInvitesByClan, getPendingInvites, deleteInvite
 };

@@ -1,44 +1,107 @@
-<% if (rewards.length === 0) { %>
-<p class="text-secondary">No active seeding whitelist entries.</p>
-<% } else { %>
-<div class="text-sm text-secondary mb-2"><%= rewards.length %> active reward(s)</div>
-<div class="overflow-x-auto">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Steam ID</th>
-        <th>Name</th>
-        <th>Expires</th>
-        <th>Remaining</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% rewards.forEach(r => {
-        const now = new Date();
-        const exp = new Date(r.expires_at + 'Z');
-        const diffMs = exp - now;
-        const diffDays = Math.floor(diffMs / 86400000);
-        const diffHours = Math.floor((diffMs % 86400000) / 3600000);
-        let remaining = '';
-        if (diffDays > 0) remaining = diffDays + 'd ' + diffHours + 'h';
-        else if (diffHours > 0) remaining = diffHours + 'h';
-        else remaining = '<1h';
-      %>
-      <tr>
-        <td class="font-mono text-sm"><%= r.steam_id %></td>
-        <td><%= r.player_name || '-' %></td>
-        <td class="text-sm"><%= r.expires_at.split(' ')[0] %></td>
-        <td class="text-sm <%= diffDays < 1 ? 'text-warning' : '' %>"><%= remaining %></td>
-        <td>
-          <form method="POST" action="/seeding/rewards/<%= r.id %>/delete" style="display:inline" onsubmit="return confirmDelete('this seeding reward')">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button type="submit" class="action-link action-link--danger">Revoke</button>
-          </form>
-        </td>
-      </tr>
-      <% }) %>
-    </tbody>
-  </table>
+<div class="bg-surface border border-border rounded-lg p-4">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('rewards', this)">Active Rewards</button>
+    <button class="tab-btn" onclick="switchTab('seeders', this)">All Seeders</button>
+  </div>
+
+  <div id="tab-rewards" class="tab-panel active">
+    <% if (rewards.length === 0) { %>
+    <p class="text-secondary">No active seeding whitelist entries.</p>
+    <% } else { %>
+    <div class="text-sm text-secondary mb-2"><%= rewards.length %> active reward(s)</div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Steam ID</th>
+            <th>Name</th>
+            <th>Expires</th>
+            <th>Remaining</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rewards.forEach(r => {
+            const now = new Date();
+            const exp = new Date(r.expires_at + 'Z');
+            const diffMs = exp - now;
+            const diffDays = Math.floor(diffMs / 86400000);
+            const diffHours = Math.floor((diffMs % 86400000) / 3600000);
+            let remaining = '';
+            if (diffDays > 0) remaining = diffDays + 'd ' + diffHours + 'h';
+            else if (diffHours > 0) remaining = diffHours + 'h';
+            else remaining = '<1h';
+          %>
+          <tr>
+            <td class="font-mono text-sm"><%= r.steam_id %></td>
+            <td><%= r.player_name || '-' %></td>
+            <td class="text-sm"><%= r.expires_at.split(' ')[0] %></td>
+            <td class="text-sm <%= diffDays < 1 ? 'text-warning' : '' %>"><%= remaining %></td>
+            <td>
+              <form method="POST" action="/seeding/rewards/<%= r.id %>/delete" style="display:inline" onsubmit="return confirmDelete('this seeding reward')">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="action-link action-link--danger">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+
+  <div id="tab-seeders" class="tab-panel">
+    <div class="flex flex-wrap gap-3 items-end mb-4">
+      <form method="GET" action="/seeding/rewards" class="flex flex-wrap gap-3 items-end">
+        <input type="hidden" name="tab" value="seeders">
+        <input type="text" name="search" value="<%= search %>" placeholder="Search name or Steam ID..." class="input-field w-64">
+        <button type="submit" class="btn btn-accent">Filter</button>
+        <a href="/seeding/rewards?tab=seeders" class="btn btn-secondary">Clear</a>
+      </form>
+    </div>
+    <% if (seeders.length === 0) { %>
+    <p class="text-secondary">No seeders found.</p>
+    <% } else { %>
+    <div class="text-sm text-secondary mb-2"><%= seeders.length %> seeder(s)</div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Steam ID</th>
+            <th>Name</th>
+            <th>Progress</th>
+            <th>Seeding Time</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% seeders.forEach(s => { %>
+          <tr>
+            <td class="font-mono text-sm"><%= s.steam_id %></td>
+            <td><%= s.player_name || '-' %></td>
+            <td class="text-sm"><%= s.points %> / <%= pointsNeeded %></td>
+            <td class="text-sm"><%= formatMinutes(s.lifetime_points) %></td>
+            <td class="text-sm text-secondary"><%= s.last_seen_at ? s.last_seen_at.split(' ')[0] : '—' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
 </div>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+<% if (typeof tab !== 'undefined' && tab === 'seeders') { %>
+document.addEventListener('DOMContentLoaded', function() {
+  switchTab('seeders', document.querySelectorAll('.tab-btn')[1]);
+});
 <% } %>
+</script>

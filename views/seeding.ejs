@@ -223,6 +223,26 @@
       color: #8b90a0;
       font-weight: 500;
     }
+    .seeding-page .seeding-help-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      border: 1px solid #8b90a0;
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: #8b90a0;
+      cursor: pointer;
+      margin-left: 0.25rem;
+      vertical-align: middle;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .seeding-page .seeding-help-toggle:hover {
+      border-color: #e10600;
+      color: #e10600;
+    }
     .seeding-page .seeding-footer {
       border-top: 1px solid #2d3244;
       padding: 1.5rem 0;
@@ -259,11 +279,15 @@
     <div class="mb-8">
       <h1 class="seeding-title">Seeding <span>Leaderboard</span></h1>
       <% if (!enabled) { %>
-      <p class="seeding-subtitle">Seeding rewards are currently disabled.</p>
+      <p class="seeding-subtitle">Seeding whitelist is currently disabled.</p>
       <% } else { %>
       <p class="seeding-subtitle">
-        Seed the server to earn a reserved slot. <strong><%= pointsNeeded %> minutes</strong> &rarr; <strong><%= rewardDays %> day</strong> whitelist.
+        Seed the server to earn a whitelist slot. <strong><%= pointsNeeded %> minutes</strong> &rarr; <strong><%= rewardDays %> day</strong> whitelist.
+        <span class="seeding-help-toggle" onclick="document.getElementById('seeding-help').style.display = document.getElementById('seeding-help').style.display === 'none' ? 'block' : 'none'" title="How does this work?">?</span>
       </p>
+      <div id="seeding-help" style="display:none;margin-top:1rem;padding:1.25rem;background:#1a1a1a;border:1px solid #2d3244;font-size:0.875rem;color:#8b90a0;line-height:1.8">
+        The whitelist expiry doesn't stack. Hitting the threshold again resets it to <strong style="color:#e2e4ea"><%= rewardDays %> days</strong> from that point &mdash; it doesn't add extra days on top.
+      </div>
       <% } %>
     </div>
 
@@ -300,8 +324,8 @@
                 <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
                 <td class="seeding-clan-name"><%= c.name %></td>
                 <td class="seeding-clan-stat"><%= c.seeder_count %></td>
-                <td class="seeding-clan-stat"><%= c.total_lifetime_minutes %> min</td>
-                <td class="seeding-clan-stat"><%= c.seeder_count > 0 ? Math.round(c.total_lifetime_minutes / c.seeder_count) : 0 %> min</td>
+                <td class="seeding-clan-stat"><%= formatMinutes(c.total_lifetime_minutes) %></td>
+                <td class="seeding-clan-stat"><%= formatMinutes(c.seeder_count > 0 ? Math.round(c.total_lifetime_minutes / c.seeder_count) : 0) %></td>
               </tr>
               <% }) %>
             </tbody>
@@ -325,7 +349,7 @@
             <th>#</th>
             <th>Player</th>
             <th>Lifetime</th>
-            <th>Next Reward</th>
+            <th>Whitelist Progress</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -334,7 +358,7 @@
           <tr>
             <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
             <td class="seeding-player-name"><%= p.player_name || 'Unknown' %></td>
-            <td class="seeding-lifetime"><%= p.lifetime_points %> min</td>
+            <td class="seeding-lifetime"><%= formatMinutes(p.lifetime_points) %></td>
             <td>
               <div class="flex items-center gap-2">
                 <div class="seeding-progress-bar">

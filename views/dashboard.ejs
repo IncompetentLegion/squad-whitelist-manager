@@ -25,6 +25,7 @@
   </div>
 </div>
 
+<div class="bg-surface border border-border rounded-lg p-4">
 <h2 class="text-lg font-bold mb-4">Recent Additions</h2>
 <% if (stats.recentPlayers.length === 0) { %>
 <p class="text-secondary">No players yet.</p>
@@ -37,6 +38,7 @@
         <th>Name</th>
         <th>Clan</th>
         <th>Expires</th>
+        <th>Seeding Time</th>
         <th>Added</th>
       </tr>
     </thead>
@@ -47,6 +49,7 @@
         <td><%= p.player_name || '-' %></td>
         <td class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || 'Standalone' %></td>
         <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
         <td class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
       </tr>
       <% }) %>
@@ -54,6 +57,7 @@
   </table>
 </div>
 <% } %>
+</div>
 
 <% } else { %>
 
@@ -71,6 +75,7 @@
   </div>
 </div>
 
+<div class="bg-surface border border-border rounded-lg p-4">
 <h2 class="text-lg font-bold mb-4">Recent Additions</h2>
 <% if (stats.recentPlayers.length === 0) { %>
 <p class="text-secondary">No players yet.</p>
@@ -82,6 +87,7 @@
         <th>Steam ID</th>
         <th>Name</th>
         <th>Expires</th>
+        <th>Seeding Time</th>
         <th>Added</th>
       </tr>
     </thead>
@@ -91,6 +97,7 @@
         <td class="font-mono text-sm"><%= p.steam_id %></td>
         <td><%= p.player_name || '-' %></td>
         <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
         <td class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
       </tr>
       <% }) %>
@@ -98,5 +105,6 @@
   </table>
 </div>
 <% } %>
+</div>
 <% } %>
 <% } %>

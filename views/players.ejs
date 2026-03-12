@@ -57,6 +57,7 @@
   </form>
 </div>
 
+<div class="bg-surface border border-border rounded-lg p-4">
 <% if (players.length === 0) { %>
 <p class="text-secondary">No players found.</p>
 <% } else { %>
@@ -70,6 +71,7 @@
         <% if (isAdmin) { %><th>Clan</th><% } %>
         <th>Expires</th>
         <th>Note</th>
+        <th>Seeding Time</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -83,6 +85,7 @@
         <% } %>
         <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
         <td class="text-secondary text-sm"><%= p.note || '' %></td>
+        <td class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
         <td>
           <div class="actions">
             <button type="button" class="action-link action-link--edit" onclick="toggleEdit('pe-<%= p.id %>')">Edit</button>
@@ -95,7 +98,7 @@
         </td>
       </tr>
       <tr id="pe-<%= p.id %>" class="edit-row">
-        <td colspan="<%= isAdmin ? 7 : 6 %>">
+        <td colspan="<%= isAdmin ? 8 : 7 %>">
           <form method="POST" action="/players/<%= p.id %>/edit" class="flex flex-wrap gap-3 items-end">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div>
@@ -120,3 +123,4 @@
   </table>
 </div>
 <% } %>
+</div>

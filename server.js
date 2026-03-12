@@ -19,6 +19,19 @@ app.use(cookieParser());
 app.use(ejsLayouts);
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Template helpers
+app.locals.formatMinutes = function(totalMin) {
+  totalMin = totalMin || 0;
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  const parts = [];
+  if (d > 0) parts.push(d + 'd');
+  if (h > 0) parts.push(h + 'h');
+  if (m > 0 || parts.length === 0) parts.push(m + 'm');
+  return parts.join(' ');
+};
+
 // Routes
 const authRoutes = require('./src/routes/auth');
 const dashboardRoutes = require('./src/routes/dashboard');
