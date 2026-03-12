@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { requireAuth, requireAdmin, verifyCsrf } = require('../auth');
-const { invalidateCache } = require('../utils');
+const { invalidateCache, updateLastSeedingReport } = require('../utils');
 
 // Public leaderboard
 router.get('/', (req, res) => {
@@ -82,6 +82,16 @@ router.post('/report/:apiKey', (req, res) => {
   const { players } = req.body;
   if (!Array.isArray(players)) {
     return res.status(400).json({ error: 'Invalid payload' });
+  }
+
+  updateLastSeedingReport();
+
+  const minPlayers = db.getConfigValue('seeding_min_players', 2);
+  const maxPlayers = db.getConfigValue('seeding_max_players', 50);
+  const playerCount = players.length;
+
+  if (playerCount < minPlayers || playerCount > maxPlayers) {
+    return res.json({ ok: true, processed: 0, rewardsCreated: 0, skipped: 'player count outside seeding window' });
   }
 
   const pointsNeeded = db.getConfigValue('seeding_points_needed', 60);

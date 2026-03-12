@@ -1,6 +1,15 @@
 const db = require('./db');
 
 let cachedOutput = null;
+let lastSeedingReport = null;
+
+function getLastSeedingReport() {
+  return lastSeedingReport;
+}
+
+function updateLastSeedingReport() {
+  lastSeedingReport = Date.now();
+}
 let cacheTime = 0;
 const CACHE_TTL = 60000; // 60 seconds
 
@@ -52,4 +61,4 @@ function runCleanup() {
   }
 }
 
-module.exports = { generateWhitelist, invalidateCache, runCleanup };
+module.exports = { generateWhitelist, invalidateCache, runCleanup, getLastSeedingReport, updateLastSeedingReport };

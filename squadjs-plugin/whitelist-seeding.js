@@ -26,16 +26,6 @@ export default class WhitelistSeeding extends BasePlugin {
         description: 'API key for both the report and progress endpoints, matching the one configured in the Whitelist Manager',
         default: ''
       },
-      minPlayers: {
-        required: false,
-        description: 'Minimum player count to consider server as seeding',
-        default: 2
-      },
-      maxPlayers: {
-        required: false,
-        description: 'Maximum player count — above this, seeding stops',
-        default: 50
-      },
       showProgressOnJoin: {
         required: false,
         description: 'Show seeding progress message when a player joins',
@@ -57,9 +47,6 @@ export default class WhitelistSeeding extends BasePlugin {
 
     this.interval = setInterval(async () => {
       try {
-        const playerCount = this.server.a2sPlayerCount;
-        if (playerCount < this.options.minPlayers || playerCount > this.options.maxPlayers) return;
-
         const players = this.server.players.map(p => ({
           steamId: p.steamID,
           name: p.name
