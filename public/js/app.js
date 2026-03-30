@@ -31,11 +31,34 @@ function toggleEdit(id) {
 document.addEventListener('DOMContentLoaded', function() {
   var toggle = document.getElementById('sidebar-toggle');
   var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+
+  function closeSidebar() {
+    if (sidebar) {
+      sidebar.classList.add('-translate-x-full');
+      sidebar.classList.remove('translate-x-0');
+    }
+    if (overlay) overlay.classList.remove('active');
+  }
+
+  function openSidebar() {
+    if (sidebar) {
+      sidebar.classList.remove('-translate-x-full');
+      sidebar.classList.add('translate-x-0');
+    }
+    if (overlay) overlay.classList.add('active');
+  }
+
   if (toggle && sidebar) {
     toggle.addEventListener('click', function() {
-      sidebar.classList.toggle('-translate-x-full');
-      sidebar.classList.toggle('translate-x-0');
+      var isOpen = sidebar.classList.contains('translate-x-0');
+      if (isOpen) closeSidebar();
+      else openSidebar();
     });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeSidebar);
   }
 
   // Auto-dismiss flash messages
