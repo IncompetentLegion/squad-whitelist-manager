@@ -114,6 +114,14 @@ function verifyCsrfCookie(req, res, next) {
   next();
 }
 
+function validateUsername(username) {
+  if (!username) return 'Username is required.';
+  if (username.length < 3) return 'Username must be at least 3 characters.';
+  if (username.length > 32) return 'Username must be 32 characters or fewer.';
+  if (!/^[a-z0-9._-]+$/.test(username)) return 'Username can only contain letters, numbers, dots, hyphens, and underscores.';
+  return null;
+}
+
 function loginRateLimit(req, res, next) {
   const ip = req.ip;
   const now = Date.now();
@@ -129,4 +137,4 @@ function loginRateLimit(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireAdmin, redirectIfNoUsers, requireNoUsers, generateToken, sessionCookieOptions, verifyCsrf, csrfCookie, verifyCsrfCookie, loginRateLimit };
+module.exports = { requireAuth, requireAdmin, redirectIfNoUsers, requireNoUsers, generateToken, sessionCookieOptions, verifyCsrf, csrfCookie, verifyCsrfCookie, loginRateLimit, validateUsername };
