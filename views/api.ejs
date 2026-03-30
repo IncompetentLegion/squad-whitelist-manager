@@ -17,7 +17,14 @@
           </div>
           <p class="text-secondary text-xs mt-1">Used by SquadJS to report seeding data and query player progress.</p>
         </div>
-        <button type="submit" class="btn btn-accent">Save Keys</button>
+        <div class="mb-6">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="seeding_leaderboard_api" <% if (seedingLeaderboardApi) { %>checked<% } %>>
+            <span class="text-sm">Enable public seeding leaderboard API</span>
+          </label>
+          <p class="text-secondary text-xs mt-1">Exposes seeding leaderboard data as JSON at /api/seeding.</p>
+        </div>
+        <button type="submit" class="btn btn-accent">Save</button>
       </form>
     </div>
   </div>
@@ -94,6 +101,55 @@
   "last_seen_at": "2026-03-11 12:00:00",
   "has_reward": false,
   "reward_expires_at": null
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-surface border border-border rounded-lg p-6">
+      <h3 class="font-bold mb-1">Seeding Leaderboard</h3>
+      <p class="text-secondary text-xs mb-4">Public JSON endpoint with player and clan seeding data.</p>
+      <div class="mb-3">
+        <span class="inline-block text-xs font-bold px-2 py-0.5 rounded" style="background:rgba(63,185,80,0.15);color:#3fb950">GET</span>
+        <span class="text-secondary text-xs ml-1">application/json</span>
+        <% if (seedingLeaderboardApi) { %>
+        <span class="inline-block text-xs px-2 py-0.5 rounded ml-1" style="background:rgba(63,185,80,0.15);color:#3fb950">Public</span>
+        <% } else { %>
+        <span class="inline-block text-xs px-2 py-0.5 rounded ml-1" style="background:rgba(225,6,0,0.15);color:#e10600">Disabled</span>
+        <% } %>
+      </div>
+      <div class="bg-page border border-border rounded p-3 mb-3" style="word-break:break-all">
+        <code class="text-sm"><%= baseUrl %>/api/seeding</code>
+      </div>
+      <% if (!seedingLeaderboardApi) { %>
+      <p class="text-xs mb-3" style="color:var(--accent)">Enable via the toggle on the left to activate this endpoint.</p>
+      <% } %>
+      <div>
+        <p class="text-secondary text-xs font-bold mb-1">Response</p>
+        <div class="bg-page border border-border rounded p-3">
+          <pre class="text-xs" style="margin:0;white-space:pre-wrap"><code>{
+  "enabled": true,
+  "points_needed": 60,
+  "reward_days": 7,
+  "players": [
+    {
+      "steam_id": "76561198...",
+      "player_name": "PlayerName",
+      "points": 45,
+      "lifetime_points": 820,
+      "clan_name": "ClanTag",
+      "last_seen_at": "2026-03-11 12:00:00",
+      "has_reward": false
+    }
+  ],
+  "clan_leaderboard": [
+    {
+      "clan_id": 1,
+      "clan_name": "ClanTag",
+      "seeder_count": 5,
+      "total_lifetime_minutes": 4200
+    }
+  ]
 }</code></pre>
         </div>
       </div>
