@@ -159,10 +159,13 @@ router.get('/progress/:apiKey/:steamId', (req, res) => {
 
 // Admin rewards page
 router.get('/rewards', requireAuth, requireAdmin, (req, res) => {
-  const rewards = db.getActiveSeedingRewards();
+  const clanSteamIds = new Set(db.getActivePlayersForWhitelist().filter(p => p.clan_name).map(p => p.steam_id));
+  const allRewards = db.getActiveSeedingRewards();
+  const rewards = allRewards.filter(r => !clanSteamIds.has(r.steam_id));
   const search = req.query.search || '';
   const tab = req.query.tab || '';
-  const seeders = db.searchSeedingPoints(tab === 'seeders' ? search : '');
+  const allSeeders = db.searchSeedingPoints(tab === 'seeders' ? search : '');
+  const seeders = allSeeders.filter(s => !clanSteamIds.has(s.steam_id) && s.lifetime_points >= 5);
   const pointsNeeded = db.getConfigValue('seeding_points_needed', 60);
   res.render('seeding-rewards', {
     title: 'Seeding Whitelist',
