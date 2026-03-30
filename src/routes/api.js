@@ -71,6 +71,7 @@ router.get('/seeding', (req, res) => {
       player_name: p.player_name || null,
       points: p.points,
       lifetime_points: p.lifetime_points,
+      play_minutes: p.play_minutes || 0,
       clan_name: p.clan_name || null,
       last_seen_at: p.last_seen_at || null,
       has_reward: rewardedIds.has(p.steam_id)
@@ -79,7 +80,8 @@ router.get('/seeding', (req, res) => {
       clan_id: c.id,
       clan_name: c.name,
       seeder_count: c.seeder_count,
-      total_lifetime_minutes: c.total_lifetime_minutes
+      total_lifetime_minutes: c.total_lifetime_minutes,
+      total_play_minutes: c.total_play_minutes || 0
     }))
   });
 });

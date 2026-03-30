@@ -74,11 +74,6 @@ router.post('/report/:apiKey', (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const enabled = db.getConfigValue('seeding_enabled', false);
-  if (!enabled) {
-    return res.status(400).json({ error: 'Seeding is disabled' });
-  }
-
   const { players } = req.body;
   if (!Array.isArray(players)) {
     return res.status(400).json({ error: 'Invalid payload' });
@@ -86,12 +81,32 @@ router.post('/report/:apiKey', (req, res) => {
 
   updateLastSeedingReport();
 
-  const minPlayers = db.getConfigValue('seeding_min_players', 2);
   const maxPlayers = db.getConfigValue('seeding_max_players', 50);
   const playerCount = players.length;
 
+  // Track play time when server is populated (above seeding threshold)
+  let playTimeTracked = false;
+  if (playerCount > maxPlayers) {
+    for (const p of players) {
+      if (!p.steamId) continue;
+      try {
+        db.upsertPlayTime(p.steamId, p.name || null);
+      } catch (err) {
+        continue;
+      }
+    }
+    playTimeTracked = true;
+  }
+
+  const enabled = db.getConfigValue('seeding_enabled', false);
+  if (!enabled) {
+    return res.json({ ok: true, processed: players.length, playTimeTracked, seedingDisabled: true });
+  }
+
+  const minPlayers = db.getConfigValue('seeding_min_players', 2);
+
   if (playerCount < minPlayers || playerCount > maxPlayers) {
-    return res.json({ ok: true, processed: 0, rewardsCreated: 0, skipped: 'player count outside seeding window' });
+    return res.json({ ok: true, processed: 0, rewardsCreated: 0, playTimeTracked, skipped: 'player count outside seeding window' });
   }
 
   const pointsNeeded = db.getConfigValue('seeding_points_needed', 60);
@@ -121,7 +136,7 @@ router.post('/report/:apiKey', (req, res) => {
     invalidateCache();
   }
 
-  res.json({ ok: true, processed: players.length, rewardsCreated });
+  res.json({ ok: true, processed: players.length, rewardsCreated, playTimeTracked });
 });
 
 // API endpoint: get player seeding progress
@@ -140,7 +155,7 @@ router.get('/progress/:apiKey/:steamId', (req, res) => {
   const current = db.getSeedingPointsForPlayer(steamId);
 
   if (!current) {
-    return res.json({ steam_id: steamId, points: 0, points_needed: pointsNeeded, lifetime_points: 0, has_reward: false });
+    return res.json({ steam_id: steamId, points: 0, points_needed: pointsNeeded, lifetime_points: 0, play_minutes: 0, has_reward: false });
   }
 
   const reward = db.getActiveSeedingRewards().find(r => r.steam_id === steamId);
@@ -151,6 +166,7 @@ router.get('/progress/:apiKey/:steamId', (req, res) => {
     points: current.points,
     points_needed: pointsNeeded,
     lifetime_points: current.lifetime_points,
+    play_minutes: current.play_minutes || 0,
     last_seen_at: current.last_seen_at || null,
     has_reward: !!reward,
     reward_expires_at: reward ? reward.expires_at : null

@@ -75,6 +75,7 @@
             <th>Clan</th>
             <th>Progress</th>
             <th>Seeding Time</th>
+            <th>Play Time</th>
             <th>Last Seen</th>
           </tr>
         </thead>
@@ -86,6 +87,7 @@
             <td data-label="Clan" class="<%= s.clan_name ? '' : 'text-secondary' %>"><%= s.clan_name || '—' %></td>
             <td data-label="Progress" class="text-sm"><%= s.points %> / <%= pointsNeeded %></td>
             <td data-label="Seeding Time" class="text-sm"><%= formatMinutes(s.lifetime_points) %></td>
+            <td data-label="Play Time" class="text-sm"><%= formatMinutes(s.play_minutes || 0) %></td>
             <td data-label="Last Seen" class="text-sm text-secondary"><%= s.last_seen_at ? s.last_seen_at.split(' ')[0] : '—' %></td>
           </tr>
           <% }) %>

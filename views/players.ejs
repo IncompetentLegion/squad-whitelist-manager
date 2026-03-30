@@ -74,6 +74,7 @@
         <th>Expires</th>
         <th>Note</th>
         <th>Seeding Time</th>
+        <th>Play Time</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -88,6 +89,7 @@
         <td data-label="Expires" class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
         <td data-label="Note" class="text-secondary text-sm"><%= p.note || '' %></td>
         <td data-label="Seeding" class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
+        <td data-label="Play Time" class="text-sm"><%= formatMinutes(p.play_minutes) %></td>
         <td class="mobile-actions">
           <div class="actions">
             <button type="button" class="action-link action-link--edit" onclick="toggleEdit('pe-<%= p.id %>')">Edit</button>
@@ -100,7 +102,7 @@
         </td>
       </tr>
       <tr id="pe-<%= p.id %>" class="edit-row">
-        <td colspan="<%= isAdmin ? 7 : 6 %>">
+        <td colspan="<%= isAdmin ? 8 : 7 %>">
           <form method="POST" action="/players/<%= p.id %>/edit" class="flex flex-wrap gap-3 items-end">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div>
