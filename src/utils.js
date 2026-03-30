@@ -38,7 +38,7 @@ function generateWhitelist() {
     lines.push(`Admin=${p.steam_id}:Whitelist // ${comment}`);
   }
 
-  const playerSteamIds = new Set(players.filter(p => p.clan_name).map(p => p.steam_id));
+  const playerSteamIds = new Set(players.map(p => p.steam_id));
   const rewards = db.getActiveSeedingRewards();
   for (const r of rewards) {
     if (playerSteamIds.has(r.steam_id)) continue;

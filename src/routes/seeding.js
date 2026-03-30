@@ -86,7 +86,7 @@ router.post('/report/:apiKey', (req, res) => {
 
   // Track play time when server is populated (above seeding threshold)
   let playTimeTracked = false;
-  if (playerCount > maxPlayers) {
+  if (playerCount >= maxPlayers) {
     for (const p of players) {
       if (!p.steamId) continue;
       try {
