@@ -1,5 +1,5 @@
 <% if (isAdmin) { %>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8" style="grid-template-columns: repeat(5, 1fr)">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 dashboard-stats">
   <div class="bg-surface border border-border rounded-lg p-4">
     <div class="text-secondary text-sm">Total Players</div>
     <div class="text-2xl font-bold mt-1"><%= stats.totalPlayers %></div>
@@ -31,7 +31,7 @@
 <p class="text-secondary">No players yet.</p>
 <% } else { %>
 <div class="overflow-x-auto">
-  <table class="data-table">
+  <table class="data-table mobile-cards">
     <thead>
       <tr>
         <th>Steam ID</th>
@@ -39,18 +39,20 @@
         <th>Clan</th>
         <th>Expires</th>
         <th>Seeding Time</th>
+        <th>Play Time</th>
         <th>Added</th>
       </tr>
     </thead>
     <tbody>
       <% stats.recentPlayers.forEach(p => { %>
       <tr>
-        <td class="font-mono text-sm"><%= p.steam_id %></td>
-        <td><%= p.player_name || '-' %></td>
-        <td class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || 'Standalone' %></td>
-        <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
-        <td class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
-        <td class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
+        <td data-label="Steam ID" class="font-mono text-sm"><%= p.steam_id %></td>
+        <td class="mobile-primary"><%= p.player_name || '-' %></td>
+        <td data-label="Clan" class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || 'Standalone' %></td>
+        <td data-label="Expires" class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td data-label="Seeding" class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
+        <td data-label="Play Time" class="text-sm"><%= formatMinutes(p.play_minutes) %></td>
+        <td data-label="Added" class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
       </tr>
       <% }) %>
     </tbody>
@@ -64,7 +66,7 @@
 <% if (!stats.clan) { %>
 <p class="text-secondary">No clan assigned. Contact an admin.</p>
 <% } else { %>
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
   <div class="bg-surface border border-border rounded-lg p-4">
     <div class="text-secondary text-sm">Clan</div>
     <div class="text-2xl font-bold mt-1"><%= stats.clan.name %></div>
@@ -77,6 +79,10 @@
     <div class="text-secondary text-sm">Total Seeding Time</div>
     <div class="text-2xl font-bold mt-1"><%= formatMinutes(stats.totalSeedingMinutes) %></div>
   </div>
+  <div class="bg-surface border border-border rounded-lg p-4">
+    <div class="text-secondary text-sm">Total Play Time</div>
+    <div class="text-2xl font-bold mt-1"><%= formatMinutes(stats.totalPlayMinutes) %></div>
+  </div>
 </div>
 
 <div class="bg-surface border border-border rounded-lg p-4">
@@ -85,24 +91,26 @@
 <p class="text-secondary">No players yet.</p>
 <% } else { %>
 <div class="overflow-x-auto">
-  <table class="data-table">
+  <table class="data-table mobile-cards">
     <thead>
       <tr>
         <th>Steam ID</th>
         <th>Name</th>
         <th>Expires</th>
         <th>Seeding Time</th>
+        <th>Play Time</th>
         <th>Added</th>
       </tr>
     </thead>
     <tbody>
       <% stats.recentPlayers.forEach(p => { %>
       <tr>
-        <td class="font-mono text-sm"><%= p.steam_id %></td>
-        <td><%= p.player_name || '-' %></td>
-        <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
-        <td class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
-        <td class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
+        <td data-label="Steam ID" class="font-mono text-sm"><%= p.steam_id %></td>
+        <td class="mobile-primary"><%= p.player_name || '-' %></td>
+        <td data-label="Expires" class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td data-label="Seeding" class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
+        <td data-label="Play Time" class="text-sm"><%= formatMinutes(p.play_minutes) %></td>
+        <td data-label="Added" class="text-secondary text-sm"><%= p.created_at.split(' ')[0] %></td>
       </tr>
       <% }) %>
     </tbody>

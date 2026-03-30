@@ -274,6 +274,17 @@
       text-transform: uppercase;
       letter-spacing: 0.4em;
     }
+    @media (max-width: 639px) {
+      .seeding-page .seeding-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+      .seeding-page .seeding-title { font-size: 1.75rem; }
+      .seeding-page .seeding-section-title { font-size: 1.5rem; }
+      .seeding-page .seeding-card { padding: 1rem; }
+      .seeding-page .seeding-table th,
+      .seeding-page .seeding-table td { padding: 0.5rem; font-size: 0.8rem; }
+      .seeding-page .seeding-progress-bar { width: 60px; }
+      .seeding-page .seeding-search { min-width: 0; }
+      .seeding-page .mobile-hide { display: none; }
+    }
   </style>
 </head>
 <body class="seeding-page min-h-screen">
@@ -331,21 +342,23 @@
           <table class="seeding-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th class="mobile-hide">#</th>
                 <th>Clan</th>
-                <th>Seeders</th>
-                <th>Total Lifetime</th>
-                <th>Avg / Player</th>
+                <th class="mobile-hide">Seeders</th>
+                <th>Total Seeding</th>
+                <th class="mobile-hide">Total Play Time</th>
+                <th class="mobile-hide">Avg / Player</th>
               </tr>
             </thead>
             <tbody>
               <% clanLeaderboard.forEach((c, i) => { %>
               <tr>
-                <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
+                <td class="seeding-rank mobile-hide <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
                 <td class="seeding-clan-name"><%= c.name %></td>
-                <td class="seeding-clan-stat"><%= c.seeder_count %></td>
+                <td class="seeding-clan-stat mobile-hide"><%= c.seeder_count %></td>
                 <td class="seeding-clan-stat"><%= formatMinutes(c.total_lifetime_minutes) %></td>
-                <td class="seeding-clan-stat"><%= formatMinutes(c.seeder_count > 0 ? Math.round(c.total_lifetime_minutes / c.seeder_count) : 0) %></td>
+                <td class="seeding-clan-stat mobile-hide"><%= formatMinutes(c.total_play_minutes || 0) %></td>
+                <td class="seeding-clan-stat mobile-hide"><%= formatMinutes(c.seeder_count > 0 ? Math.round(c.total_lifetime_minutes / c.seeder_count) : 0) %></td>
               </tr>
               <% }) %>
             </tbody>
@@ -366,19 +379,21 @@
       <table class="seeding-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th class="mobile-hide">#</th>
             <th>Player</th>
-            <th>Lifetime</th>
-            <th>Whitelist Progress <span class="seeding-help-toggle" id="progress-tip-toggle">?</span></th>
+            <th class="mobile-hide">Lifetime</th>
+            <th class="mobile-hide">Play Time</th>
+            <th>Progress <span class="seeding-help-toggle" id="progress-tip-toggle">?</span></th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
           <% points.forEach((p, i) => { %>
           <tr>
-            <td class="seeding-rank <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
+            <td class="seeding-rank mobile-hide <%= i < 3 ? 'seeding-rank-top' : '' %>"><%= i + 1 %></td>
             <td class="seeding-player-name"><%= p.player_name || 'Unknown' %><% if (p.clan_name) { %> <span class="seeding-badge seeding-badge-clan"><%= p.clan_name %></span><% } %></td>
-            <td class="seeding-lifetime"><%= formatMinutes(p.lifetime_points) %></td>
+            <td class="seeding-lifetime mobile-hide"><%= formatMinutes(p.lifetime_points) %></td>
+            <td class="seeding-lifetime mobile-hide"><%= formatMinutes(p.play_minutes || 0) %></td>
             <td>
               <div class="flex items-center gap-2">
                 <div class="seeding-progress-bar">

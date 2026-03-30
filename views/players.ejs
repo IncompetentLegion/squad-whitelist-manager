@@ -52,8 +52,10 @@
       <% }) %>
     </select>
     <% } %>
-    <button type="submit" class="btn btn-accent">Filter</button>
-    <a href="/players" class="btn btn-secondary">Clear</a>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-accent">Filter</button>
+      <a href="/players" class="btn btn-secondary">Clear</a>
+    </div>
   </form>
 </div>
 
@@ -63,7 +65,7 @@
 <% } else { %>
 <div class="text-sm text-secondary mb-2"><%= players.length %> player(s)</div>
 <div class="overflow-x-auto">
-  <table class="data-table">
+  <table class="data-table mobile-cards">
     <thead>
       <tr>
         <th>Steam ID</th>
@@ -72,21 +74,23 @@
         <th>Expires</th>
         <th>Note</th>
         <th>Seeding Time</th>
+        <th>Play Time</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       <% players.forEach(p => { %>
       <tr>
-        <td class="font-mono text-sm"><%= p.steam_id %></td>
-        <td><%= p.player_name || '-' %></td>
+        <td data-label="Steam ID" class="font-mono text-sm"><%= p.steam_id %></td>
+        <td class="mobile-primary"><%= p.player_name || '-' %></td>
         <% if (isAdmin) { %>
-        <td class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || '—' %></td>
+        <td data-label="Clan" class="<%= p.clan_name ? '' : 'text-secondary' %>"><%= p.clan_name || '—' %></td>
         <% } %>
-        <td class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
-        <td class="text-secondary text-sm"><%= p.note || '' %></td>
-        <td class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
-        <td>
+        <td data-label="Expires" class="<%= p.expires_at ? '' : 'text-secondary' %>"><%= p.expires_at ? p.expires_at.split(' ')[0] : 'Permanent' %></td>
+        <td data-label="Note" class="text-secondary text-sm"><%= p.note || '' %></td>
+        <td data-label="Seeding" class="text-sm"><%= formatMinutes(p.lifetime_minutes) %></td>
+        <td data-label="Play Time" class="text-sm"><%= formatMinutes(p.play_minutes) %></td>
+        <td class="mobile-actions">
           <div class="actions">
             <button type="button" class="action-link action-link--edit" onclick="toggleEdit('pe-<%= p.id %>')">Edit</button>
             <span class="sep">|</span>
@@ -113,8 +117,10 @@
               <label class="block text-secondary text-xs mb-1">Note</label>
               <input type="text" name="note" value="<%= p.note || '' %>" placeholder="Note" class="input-field text-sm w-36">
             </div>
-            <button type="submit" class="btn btn-sm btn-accent">Save</button>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleEdit('pe-<%= p.id %>')">Cancel</button>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-sm btn-accent">Save</button>
+              <button type="button" class="btn btn-sm btn-secondary" onclick="toggleEdit('pe-<%= p.id %>')">Cancel</button>
+            </div>
           </form>
         </td>
       </tr>

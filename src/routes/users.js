@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const db = require('../db');
-const { requireAuth, requireAdmin, verifyCsrf, generateToken } = require('../auth');
+const { requireAuth, requireAdmin, verifyCsrf, generateToken, validateUsername } = require('../auth');
 
 function renderUsers(res, overrides = {}) {
   const data = {
@@ -55,6 +55,11 @@ router.post('/:id/edit', requireAuth, requireAdmin, verifyCsrf, async (req, res)
   // Prevent admins from demoting themselves
   if (parseInt(req.params.id) === req.user.id && role !== 'admin') {
     return res.redirect('/users');
+  }
+
+  const usernameError = validateUsername(username);
+  if (usernameError) {
+    return renderUsers(res, { error: usernameError });
   }
 
   const validRole = role === 'admin' ? 'admin' : 'manager';

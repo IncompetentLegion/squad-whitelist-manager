@@ -38,8 +38,10 @@ function generateWhitelist() {
     lines.push(`Admin=${p.steam_id}:Whitelist // ${comment}`);
   }
 
+  const playerSteamIds = new Set(players.map(p => p.steam_id));
   const rewards = db.getActiveSeedingRewards();
   for (const r of rewards) {
+    if (playerSteamIds.has(r.steam_id)) continue;
     const expiry = r.expires_at.split(' ')[0];
     const name = r.player_name ? ' - ' + sanitize(r.player_name) : '';
     lines.push(`Admin=${r.steam_id}:Whitelist // Seeder${name} - Expires: ${expiry}`);

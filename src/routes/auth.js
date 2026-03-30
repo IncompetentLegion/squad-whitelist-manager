@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const db = require('../db');
-const { requireAuth, requireNoUsers, generateToken, verifyCsrf, csrfCookie, verifyCsrfCookie, loginRateLimit, sessionCookieOptions } = require('../auth');
+const { requireAuth, requireNoUsers, generateToken, verifyCsrf, csrfCookie, verifyCsrfCookie, loginRateLimit, sessionCookieOptions, validateUsername } = require('../auth');
 
 // GET /setup
 router.get('/setup', requireNoUsers, csrfCookie, (req, res) => {
@@ -13,8 +13,12 @@ router.get('/setup', requireNoUsers, csrfCookie, (req, res) => {
 router.post('/setup', requireNoUsers, verifyCsrfCookie, async (req, res) => {
   const { password, password_confirm } = req.body;
   const username = (req.body.username || '').toLowerCase();
-  if (!username || !password) {
-    return res.render('setup', { layout: false, title: 'Initial Setup', error: 'Username and password are required.' });
+  const usernameError = validateUsername(username);
+  if (usernameError) {
+    return res.render('setup', { layout: false, title: 'Initial Setup', error: usernameError });
+  }
+  if (!password) {
+    return res.render('setup', { layout: false, title: 'Initial Setup', error: 'Password is required.' });
   }
   if (password !== password_confirm) {
     return res.render('setup', { layout: false, title: 'Initial Setup', error: 'Passwords do not match.' });
@@ -112,8 +116,12 @@ router.post('/invite/:token', verifyCsrfCookie, async (req, res) => {
   }
   const { password, password_confirm } = req.body;
   const username = (req.body.username || '').toLowerCase();
-  if (!username || !password) {
-    return res.render('invite', { layout: false, title: 'Accept Invite', invite, error: 'Username and password are required.' });
+  const usernameError = validateUsername(username);
+  if (usernameError) {
+    return res.render('invite', { layout: false, title: 'Accept Invite', invite, error: usernameError });
+  }
+  if (!password) {
+    return res.render('invite', { layout: false, title: 'Accept Invite', invite, error: 'Password is required.' });
   }
   if (password.length < 6) {
     return res.render('invite', { layout: false, title: 'Accept Invite', invite, error: 'Password must be at least 6 characters.' });

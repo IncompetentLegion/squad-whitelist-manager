@@ -10,7 +10,7 @@
     <% } else { %>
     <div class="text-sm text-secondary mb-2"><%= rewards.length %> active reward(s)</div>
     <div class="overflow-x-auto">
-      <table class="data-table">
+      <table class="data-table mobile-cards">
         <thead>
           <tr>
             <th>Steam ID</th>
@@ -33,11 +33,11 @@
             else remaining = '<1h';
           %>
           <tr>
-            <td class="font-mono text-sm"><%= r.steam_id %></td>
-            <td><%= r.player_name || '-' %></td>
-            <td class="text-sm"><%= r.expires_at.split(' ')[0] %></td>
-            <td class="text-sm <%= diffDays < 1 ? 'text-warning' : '' %>"><%= remaining %></td>
-            <td>
+            <td data-label="Steam ID" class="font-mono text-sm"><%= r.steam_id %></td>
+            <td class="mobile-primary"><%= r.player_name || '-' %></td>
+            <td data-label="Expires" class="text-sm"><%= r.expires_at.split(' ')[0] %></td>
+            <td data-label="Remaining" class="text-sm <%= diffDays < 1 ? 'text-warning' : '' %>"><%= remaining %></td>
+            <td class="mobile-actions">
               <form method="POST" action="/seeding/rewards/<%= r.id %>/delete" style="display:inline" onsubmit="return confirmDelete('this seeding reward')">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="action-link action-link--danger">Revoke</button>
@@ -56,8 +56,10 @@
       <form method="GET" action="/seeding/rewards" class="flex flex-wrap gap-3 items-end">
         <input type="hidden" name="tab" value="seeders">
         <input type="text" name="search" value="<%= search %>" placeholder="Search name or Steam ID..." class="input-field w-64">
-        <button type="submit" class="btn btn-accent">Filter</button>
-        <a href="/seeding/rewards?tab=seeders" class="btn btn-secondary">Clear</a>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-accent">Filter</button>
+          <a href="/seeding/rewards?tab=seeders" class="btn btn-secondary">Clear</a>
+        </div>
       </form>
     </div>
     <% if (seeders.length === 0) { %>
@@ -65,7 +67,7 @@
     <% } else { %>
     <div class="text-sm text-secondary mb-2"><%= seeders.length %> seeder(s)</div>
     <div class="overflow-x-auto">
-      <table class="data-table">
+      <table class="data-table mobile-cards">
         <thead>
           <tr>
             <th>Steam ID</th>
@@ -73,18 +75,20 @@
             <th>Clan</th>
             <th>Progress</th>
             <th>Seeding Time</th>
+            <th>Play Time</th>
             <th>Last Seen</th>
           </tr>
         </thead>
         <tbody>
           <% seeders.forEach(s => { %>
           <tr>
-            <td class="font-mono text-sm"><%= s.steam_id %></td>
-            <td><%= s.player_name || '-' %></td>
-            <td class="<%= s.clan_name ? '' : 'text-secondary' %>"><%= s.clan_name || '—' %></td>
-            <td class="text-sm"><%= s.points %> / <%= pointsNeeded %></td>
-            <td class="text-sm"><%= formatMinutes(s.lifetime_points) %></td>
-            <td class="text-sm text-secondary"><%= s.last_seen_at ? s.last_seen_at.split(' ')[0] : '—' %></td>
+            <td data-label="Steam ID" class="font-mono text-sm"><%= s.steam_id %></td>
+            <td class="mobile-primary"><%= s.player_name || '-' %></td>
+            <td data-label="Clan" class="<%= s.clan_name ? '' : 'text-secondary' %>"><%= s.clan_name || '—' %></td>
+            <td data-label="Progress" class="text-sm"><%= s.points %> / <%= pointsNeeded %></td>
+            <td data-label="Seeding Time" class="text-sm"><%= formatMinutes(s.lifetime_points) %></td>
+            <td data-label="Play Time" class="text-sm"><%= formatMinutes(s.play_minutes || 0) %></td>
+            <td data-label="Last Seen" class="text-sm text-secondary"><%= s.last_seen_at ? s.last_seen_at.split(' ')[0] : '—' %></td>
           </tr>
           <% }) %>
         </tbody>

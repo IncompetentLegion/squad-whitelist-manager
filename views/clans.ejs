@@ -32,6 +32,9 @@
         <div class="text-xs text-secondary mb-1">
           Seeding Time: <span class="text-primary"><%= formatMinutes(clan.total_seeding_minutes) %></span>
         </div>
+        <div class="text-xs text-secondary mb-1">
+          Play Time: <span class="text-primary"><%= formatMinutes(clan.total_play_minutes || 0) %></span>
+        </div>
         <div class="text-xs text-secondary">
           Manager: <% if (managerMap[clan.id] && managerMap[clan.id].length) { %><span class="text-primary"><%= managerMap[clan.id].join(', ') %></span><% } else { %>None<% } %>
         </div>
