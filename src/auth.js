@@ -9,13 +9,24 @@ const loginAttempts = new Map();
 const RATE_LIMIT_WINDOW = 60000;
 const RATE_LIMIT_MAX = 5;
 
-// Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, data] of loginAttempts) {
-    if (now - data.start > RATE_LIMIT_WINDOW) loginAttempts.delete(ip);
+let _rateLimitInterval = null;
+
+function startRateLimitCleanup() {
+  if (_rateLimitInterval) return;
+  _rateLimitInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [ip, data] of loginAttempts) {
+      if (now - data.start > RATE_LIMIT_WINDOW) loginAttempts.delete(ip);
+    }
+  }, 300000);
+}
+
+function stopRateLimitCleanup() {
+  if (_rateLimitInterval) {
+    clearInterval(_rateLimitInterval);
+    _rateLimitInterval = null;
   }
-}, 300000);
+}
 
 function requireAuth(req, res, next) {
   const token = req.cookies?.session;
@@ -122,6 +133,13 @@ function validateUsername(username) {
   return null;
 }
 
+function validateDate(dateStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+}
+
 function loginRateLimit(req, res, next) {
   const ip = req.ip;
   const now = Date.now();
@@ -137,4 +155,8 @@ function loginRateLimit(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireAdmin, redirectIfNoUsers, requireNoUsers, generateToken, sessionCookieOptions, verifyCsrf, csrfCookie, verifyCsrfCookie, loginRateLimit, validateUsername };
+function resetLoginAttempts() {
+  loginAttempts.clear();
+}
+
+module.exports = { requireAuth, requireAdmin, redirectIfNoUsers, requireNoUsers, generateToken, sessionCookieOptions, verifyCsrf, csrfCookie, verifyCsrfCookie, loginRateLimit, validateUsername, validateDate, resetLoginAttempts, startRateLimitCleanup, stopRateLimitCleanup };

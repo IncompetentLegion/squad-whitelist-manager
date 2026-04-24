@@ -66,15 +66,25 @@ app.use((err, req, res, next) => {
 
 // Initialize database then start server
 const { runCleanup } = require('./src/utils');
+const { startRateLimitCleanup } = require('./src/auth');
 
-db.init().then(() => {
-  // Periodic cleanup - every 60 seconds
-  setInterval(runCleanup, 60000);
+const startPromise = db.init().then(() => {
+  if (require.main === module) {
+    // Periodic cleanup - every 60 seconds
+    setInterval(runCleanup, 60000);
+    startRateLimitCleanup();
 
-  app.listen(PORT, () => {
-    console.log(`Squad Whitelist Manager running on port ${PORT}`);
-  });
+    app.listen(PORT, () => {
+      console.log(`Squad Whitelist Manager running on port ${PORT}`);
+    });
+  }
+  return app;
 }).catch(err => {
   console.error('Failed to initialize database:', err);
-  process.exit(1);
+  if (require.main === module) {
+    process.exit(1);
+  }
+  throw err;
 });
+
+module.exports = { app, startPromise };
