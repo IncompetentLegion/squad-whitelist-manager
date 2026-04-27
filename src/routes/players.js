@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { requireAuth, verifyCsrf, validateDate } = require('../auth');
+const { requireAuth, requireAdmin, verifyCsrf, validateDate } = require('../auth');
 const { invalidateCache } = require('../utils');
 
 router.get('/', requireAuth, (req, res) => {
@@ -18,7 +18,9 @@ router.get('/', requireAuth, (req, res) => {
     if (!req.user.clan_id) {
       return res.render('players', {
         title: 'Players', players: [], clans: [], isAdmin: false,
-        search, clanFilter, userClan: null, clanPlayerCount: 0, error: 'No clan assigned.', success: null
+        search, clanFilter, userClan: null, clanPlayerCount: 0,
+        viewedClan: null, viewedClanStats: null,
+        error: 'No clan assigned.', success: null
       });
     }
     players = db.searchPlayers(search, req.user.clan_id);
@@ -27,10 +29,20 @@ router.get('/', requireAuth, (req, res) => {
   const clans = isAdmin ? db.getAllClans() : [];
   const userClan = req.user.clan_id ? db.getClan(req.user.clan_id) : null;
   const clanPlayerCount = req.user.clan_id ? db.getClanPlayerCount(req.user.clan_id).count : 0;
+  let viewedClan = null;
+  let viewedClanStats = null;
+
+  if (isAdmin && clanFilter && clanFilter !== 'none') {
+    viewedClan = db.getClan(parseInt(clanFilter));
+  }
+
+  if (viewedClan) {
+    viewedClanStats = db.getClanDashboardStats(viewedClan.id);
+  }
 
   res.render('players', {
     title: 'Players', players, clans, isAdmin, search, clanFilter,
-    userClan, clanPlayerCount, error, success
+    userClan, clanPlayerCount, viewedClan, viewedClanStats, error, success
   });
 });
 
@@ -90,6 +102,15 @@ router.post('/', requireAuth, verifyCsrf, (req, res) => {
   } catch (err) {
     res.redirect('/players?error=Player already exists in this clan');
   }
+});
+
+router.post('/clans/:id/toggle-whitelist', requireAuth, requireAdmin, verifyCsrf, (req, res) => {
+  const clan = db.getClan(parseInt(req.params.id));
+  if (clan) {
+    db.updateClan(clan.name, clan.player_limit, clan.whitelist_enabled ? 0 : 1, clan.id);
+    invalidateCache();
+  }
+  res.redirect(`/players?clan=${req.params.id}`);
 });
 
 router.post('/:id/edit', requireAuth, verifyCsrf, (req, res) => {

@@ -52,6 +52,34 @@ describe('API & External Endpoints', () => {
 
       db.setConfigValue('whitelist_key', '');
     });
+
+    it('excludes disabled clan players but keeps seeding rewards', async () => {
+      const agent = await createAdminAgent(app);
+
+      let clanRes = await agent.get('/clans');
+      let csrf = require('./helpers').extractCsrfToken(clanRes.text);
+      await agent.post('/clans').send({ name: 'IL', player_limit: 10, _csrf: csrf });
+
+      const db = require('../src/db');
+      const clan = db.getClanByName('IL');
+
+      let playersRes = await agent.get('/players');
+      let pcsrf = require('./helpers').extractCsrfToken(playersRes.text);
+      await agent.post('/players').send({ steam_id: '76561198000000001', player_name: 'Member', clan_id: clan.id, _csrf: pcsrf });
+
+      playersRes = await agent.get(`/players?clan=${clan.id}`);
+      pcsrf = require('./helpers').extractCsrfToken(playersRes.text);
+      await agent.post(`/players/clans/${clan.id}/toggle-whitelist`).send({ _csrf: pcsrf });
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 1);
+      db.createSeedingReward('76561198000000001', 'Member', expiryDate.toISOString().replace('T', ' ').split('.')[0]);
+
+      const res = await request(app).get('/whitelist');
+      assert.strictEqual(res.status, 200);
+      assert.ok(!res.text.includes('Admin=76561198000000001:Whitelist // IL - Member'));
+      assert.ok(res.text.includes('Admin=76561198000000001:Whitelist // Seeder - Member'));
+    });
   });
 
   describe('Seeding Report', () => {
@@ -93,6 +121,33 @@ describe('API & External Endpoints', () => {
       assert.strictEqual(points.lifetime_points, 1);
 
       db.setConfigValue('seeding_min_players', 2);
+    });
+
+    it('tracks 7-day clan seed and play time', async () => {
+      const agent = await createAdminAgent(app);
+
+      const clanRes = await agent.get('/clans');
+      const csrf = require('./helpers').extractCsrfToken(clanRes.text);
+      await agent.post('/clans').send({ name: 'IL', player_limit: 10, _csrf: csrf });
+
+      const db = require('../src/db');
+      const clan = db.getClanByName('IL');
+
+      const playersRes = await agent.get('/players');
+      const pcsrf = require('./helpers').extractCsrfToken(playersRes.text);
+      await agent.post('/players').send({ steam_id: '76561198000000001', player_name: 'Member', clan_id: clan.id, _csrf: pcsrf });
+
+      db.setConfigValue('seeding_min_players', 1);
+      db.setConfigValue('seeding_max_players', 1);
+
+      const res = await request(app)
+        .post('/seeding/report/testkey')
+        .send({ players: [{ steamId: '76561198000000001', name: 'Member' }] });
+
+      assert.strictEqual(res.status, 200);
+      const stats = db.getClanDashboardStats(clan.id);
+      assert.strictEqual(stats.seedingMinutes7d, 1);
+      assert.strictEqual(stats.playMinutes7d, 1);
     });
 
     it('does not award points when seeding is disabled', async () => {

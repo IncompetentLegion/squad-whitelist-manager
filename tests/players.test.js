@@ -196,6 +196,30 @@ describe('Players', () => {
     assert.ok(!res.text.includes('PlayerB'));
   });
 
+  it('manager player list does not show clan activity panel', async () => {
+    const { agent: manager } = await createManagerAgent(app, 'ClanA', 'managerA');
+
+    const res = await manager.get('/players');
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(!res.text.includes('Show daily breakdown'));
+    assert.ok(!res.text.includes('Seed Time (7d)'));
+  });
+
+  it('manager dashboard shows clan whitelist status and activity', async () => {
+    const { agent: manager } = await createManagerAgent(app, 'ClanA', 'managerA');
+
+    const res = await manager.get('/');
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.text.includes('Clan Activity'));
+    assert.ok(res.text.includes('Seed Time (7d)'));
+    assert.ok(res.text.includes('Whitelist'));
+    assert.ok(res.text.includes('Enabled'));
+    assert.ok(res.text.includes('Show daily breakdown'));
+    assert.ok(!res.text.includes('/toggle-whitelist'));
+  });
+
   it('manager cannot edit players from other clans', async () => {
     const admin = await createAdminAgent(app);
 

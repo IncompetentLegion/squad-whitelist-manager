@@ -40,6 +40,64 @@
 </div>
 <% } %>
 
+<% if (viewedClan && viewedClanStats) { %>
+<div class="mb-6">
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
+    <h2 class="text-lg font-bold"><%= viewedClan.name %></h2>
+    <div class="text-sm text-secondary">
+      <%= viewedClanStats.totalPlayers %><%= viewedClan.player_limit > 0 ? ' / ' + viewedClan.player_limit : '' %> players
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <div class="text-secondary text-sm">Seed Time (7d)</div>
+      <div class="text-2xl font-bold mt-1"><%= formatMinutes(viewedClanStats.seedingMinutes7d || 0) %></div>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <div class="text-secondary text-sm">Play Time (7d)</div>
+      <div class="text-2xl font-bold mt-1"><%= formatMinutes(viewedClanStats.playMinutes7d || 0) %></div>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <div class="text-secondary text-sm">Whitelist</div>
+      <div class="text-2xl font-bold mt-1 <%= viewedClan.whitelist_enabled ? 'text-success' : 'text-warning' %>"><%= viewedClan.whitelist_enabled ? 'Enabled' : 'Disabled' %></div>
+      <% if (isAdmin) { %>
+      <form method="POST" action="/players/clans/<%= viewedClan.id %>/toggle-whitelist" class="mt-2">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-sm <%= viewedClan.whitelist_enabled ? 'btn-secondary' : 'btn-accent' %>">
+          <%= viewedClan.whitelist_enabled ? 'Disable' : 'Enable' %>
+        </button>
+      </form>
+      <% } %>
+    </div>
+  </div>
+
+  <button type="button" class="action-link action-link--edit mb-2" onclick="toggleDetails('clan-activity-details', this, 'Show daily breakdown', 'Hide daily breakdown')">Show daily breakdown</button>
+  <div id="clan-activity-details" class="bg-surface border border-border rounded-lg p-4 hidden">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Seed Time</th>
+            <th>Play Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% viewedClanStats.dailyActivity.forEach(day => { %>
+          <tr>
+            <td class="font-mono text-sm"><%= day.activity_date %></td>
+            <td><%= formatMinutes(day.seeding_minutes || 0) %></td>
+            <td><%= formatMinutes(day.play_minutes || 0) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } %>
+
 <div class="flex flex-wrap gap-3 items-end mb-4">
   <form method="GET" action="/players" class="flex flex-wrap gap-3 items-end">
     <input type="text" name="search" value="<%= search %>" placeholder="Search name or Steam ID..." class="input-field w-64">

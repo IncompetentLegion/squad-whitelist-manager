@@ -27,6 +27,19 @@ function toggleEdit(id) {
   }
 }
 
+function toggleDetails(id, button, closedText, openText) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var isHidden = el.classList.contains('hidden');
+  if (isHidden) {
+    el.classList.remove('hidden');
+    if (button) button.textContent = openText || 'Hide details';
+  } else {
+    el.classList.add('hidden');
+    if (button) button.textContent = closedText || 'Show details';
+  }
+}
+
 // Sidebar toggle for mobile
 document.addEventListener('DOMContentLoaded', function() {
   var toggle = document.getElementById('sidebar-toggle');
