@@ -327,13 +327,6 @@ function getActivePlayersForWhitelist() {
   `);
 }
 
-function getActivePlayersByClanName(clanName) {
-  return all(`
-    SELECT p.steam_id, p.player_name, p.expires_at    FROM players p JOIN clans c ON p.clan_id = c.id
-    WHERE c.name = ? AND (p.expires_at IS NULL OR p.expires_at > datetime('now'))
-  `, [clanName]);
-}
-
 function getActiveSeedingRewards() {
   return all("SELECT * FROM seeding_rewards WHERE expires_at > datetime('now')");
 }
@@ -343,6 +336,7 @@ function getSeedingPoints() {
     FROM seeding_points sp
     LEFT JOIN players p ON sp.steam_id = p.steam_id
     LEFT JOIN clans c ON p.clan_id = c.id
+    WHERE sp.last_seen_at > datetime('now', '-3 months')
     ORDER BY sp.lifetime_points DESC LIMIT 50`);
 }
 
@@ -406,6 +400,7 @@ function getClanSeedingLeaderboard() {
     FROM players p
     JOIN clans c ON p.clan_id = c.id
     JOIN seeding_points sp ON p.steam_id = sp.steam_id
+    WHERE sp.last_seen_at > datetime('now', '-3 months')
     GROUP BY c.id
     ORDER BY total_lifetime_minutes DESC
   `);
@@ -456,7 +451,7 @@ function searchSeedingPoints(query) {
     FROM seeding_points sp
     LEFT JOIN players p ON sp.steam_id = p.steam_id
     LEFT JOIN clans c ON p.clan_id = c.id
-    WHERE 1=1`;
+    WHERE sp.last_seen_at > datetime('now', '-3 months')`;
   const params = [];
   if (query) {
     sql += ' AND (sp.steam_id LIKE ? OR sp.player_name LIKE ?)';
@@ -522,10 +517,6 @@ function markInviteUsed(token) {
   return run("UPDATE invites SET used_at = datetime('now') WHERE token = ?", [token]);
 }
 
-function getInvitesByClan(clanId) {
-  return all('SELECT * FROM invites WHERE clan_id = ? ORDER BY created_at DESC', [clanId]);
-}
-
 function getPendingInvites() {
   return all(`
     SELECT i.*, c.name as clan_name, u.username as created_by_name
@@ -541,7 +532,27 @@ function deleteInvite(id) {
   return run('DELETE FROM invites WHERE id = ?', [id]);
 }
 
-function getDb() { return db; }
+function resetAllTables() {
+  db.run('PRAGMA foreign_keys = OFF');
+  const tables = ['players', 'users', 'sessions', 'seeding_points', 'seeding_rewards', 'invites', 'config', 'clans'];
+  for (const table of tables) {
+    try {
+      db.run(`DELETE FROM ${table}`);
+    } catch (e) {
+      // table may not exist yet during init
+    }
+  }
+  // Reset autoincrement sequences so IDs start from 1 after reset
+  for (const table of tables) {
+    try {
+      db.run(`DELETE FROM sqlite_sequence WHERE name = ?`, [table]);
+    } catch (e) {
+      // sqlite_sequence may not exist yet
+    }
+  }
+  db.run('PRAGMA foreign_keys = ON');
+  saveNow();
+}
 
 // Save on process exit
 process.on('exit', saveNow);
@@ -549,15 +560,15 @@ process.on('SIGINT', () => { saveNow(); process.exit(); });
 process.on('SIGTERM', () => { saveNow(); process.exit(); });
 
 module.exports = {
-  init, getDb, saveNow,
+  init, saveNow, resetAllTables,
   getUser, getUserByUsername, getSessionByToken, createSession, deleteSession, deleteExpiredSessions, deleteUserSessions,
   userCount, getAllUsers, createUser, updateUser, updateUserPassword, deleteUser,
   getAllClans, getClan, getClanByName, createClan, updateClan, deleteClan,
   getClanPlayerCount, getPlayerCountByClan, getManagersByClan,
   getAllPlayers, getPlayersByClan, getPlayer, getStandalonePlayer, createPlayer, updatePlayer, deletePlayer, deleteExpiredPlayers,
-  getActivePlayersForWhitelist, getActivePlayersByClanName, getActiveSeedingRewards,
+  getActivePlayersForWhitelist, getActiveSeedingRewards,
   getSeedingPoints, upsertSeedingPoints, upsertPlayTime, getSeedingPointsForPlayer, createSeedingReward, resetSeedingPoints, getSeedingReward, deleteSeedingReward, deleteExpiredSeedingRewards,
   getConfigValue, setConfigValue,
   searchPlayers, searchSeedingPoints, getDashboardStats, getClanDashboardStats, getClanSeedingLeaderboard,
-  createInvite, getInviteByToken, markInviteUsed, getInvitesByClan, getPendingInvites, deleteInvite
+  createInvite, getInviteByToken, markInviteUsed, getPendingInvites, deleteInvite
 };

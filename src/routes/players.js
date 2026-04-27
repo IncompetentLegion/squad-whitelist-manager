@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { requireAuth, verifyCsrf } = require('../auth');
+const { requireAuth, verifyCsrf, validateDate } = require('../auth');
 const { invalidateCache } = require('../utils');
 
 router.get('/', requireAuth, (req, res) => {
@@ -40,7 +40,6 @@ router.post('/', requireAuth, verifyCsrf, (req, res) => {
   steam_id = (steam_id || '').trim();
   player_name = (player_name || '').trim() || null;
   expires_at = (expires_at || '').trim() || null;
-  if (expires_at && !expires_at.includes(' ')) expires_at += ' 23:59:59';
   note = (note || '').trim() || null;
 
   if (!steam_id) {
@@ -51,14 +50,20 @@ router.post('/', requireAuth, verifyCsrf, (req, res) => {
     return res.redirect('/players?error=Invalid Steam ID format');
   }
 
-  if (expires_at && !/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/.test(expires_at)) {
-    return res.redirect('/players?error=Invalid expiry date format');
-  }
-
   if (!isAdmin) {
     clan_id = req.user.clan_id;
+    if (!clan_id) {
+      return res.redirect('/players?error=No clan assigned');
+    }
   } else {
     clan_id = clan_id ? parseInt(clan_id) : null;
+  }
+
+  if (expires_at) {
+    if (!validateDate(expires_at)) {
+      return res.redirect('/players?error=Invalid expiry date format');
+    }
+    expires_at += ' 23:59:59';
   }
 
   if (clan_id) {
@@ -98,11 +103,13 @@ router.post('/:id/edit', requireAuth, verifyCsrf, (req, res) => {
   let { player_name, expires_at, note } = req.body;
   player_name = (player_name || '').trim() || null;
   expires_at = (expires_at || '').trim() || null;
-  if (expires_at && !expires_at.includes(' ')) expires_at += ' 23:59:59';
   note = (note || '').trim() || null;
 
-  if (expires_at && !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(expires_at)) {
-    return res.redirect('/players');
+  if (expires_at) {
+    if (!validateDate(expires_at)) {
+      return res.redirect('/players');
+    }
+    expires_at += ' 23:59:59';
   }
 
   db.updatePlayer(player_name, expires_at, note, parseInt(req.params.id));

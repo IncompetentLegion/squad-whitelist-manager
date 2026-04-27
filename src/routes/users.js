@@ -64,15 +64,18 @@ router.post('/:id/edit', requireAuth, requireAdmin, verifyCsrf, async (req, res)
 
   const validRole = role === 'admin' ? 'admin' : 'manager';
   const assignedClan = validRole === 'manager' && clan_id ? parseInt(clan_id) : null;
+  if (password && password.length < 6) {
+    return renderUsers(res, { error: 'Password must be at least 6 characters.' });
+  }
   try {
     db.updateUser(username, validRole, assignedClan, parseInt(req.params.id));
-    if (password && password.length >= 6) {
+    if (password) {
       const hash = await bcrypt.hash(password, 10);
       db.updateUserPassword(hash, parseInt(req.params.id));
     }
     res.redirect('/users');
   } catch (err) {
-    res.redirect('/users');
+    renderUsers(res, { error: 'Failed to update user. Username may already be taken.' });
   }
 });
 
