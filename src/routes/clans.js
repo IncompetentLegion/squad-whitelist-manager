@@ -48,7 +48,8 @@ router.post('/:id/edit', requireAuth, requireAdmin, verifyCsrf, (req, res) => {
     return res.redirect('/clans');
   }
   try {
-    db.updateClan(cleanName, parseInt(player_limit) || 0, parseInt(req.params.id));
+    const clan = db.getClan(parseInt(req.params.id));
+    db.updateClan(cleanName, parseInt(player_limit) || 0, clan ? clan.whitelist_enabled : 1, parseInt(req.params.id));
     invalidateCache();
   } catch (err) {
     // ignore duplicate name errors

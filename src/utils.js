@@ -61,6 +61,8 @@ function runCleanup() {
   if (deletedPlayers.changes > 0 || deletedRewards.changes > 0) {
     invalidateCache();
   }
+
+  db.deleteOldDailyActivity();
 }
 
 module.exports = { generateWhitelist, invalidateCache, runCleanup, getLastSeedingReport, updateLastSeedingReport };

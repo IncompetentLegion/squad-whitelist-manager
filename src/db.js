@@ -50,6 +50,7 @@ async function init() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       player_limit INTEGER DEFAULT 0,
+      whitelist_enabled INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
@@ -106,6 +107,22 @@ async function init() {
   try {
     db.run('ALTER TABLE seeding_points ADD COLUMN play_minutes INTEGER NOT NULL DEFAULT 0');
   } catch (e) { /* column already exists */ }
+
+  // Migration: allow admins to enable/disable clan whitelist output
+  try {
+    db.run('ALTER TABLE clans ADD COLUMN whitelist_enabled INTEGER NOT NULL DEFAULT 1');
+  } catch (e) { /* column already exists */ }
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS player_activity_daily (
+      steam_id TEXT NOT NULL,
+      activity_date TEXT NOT NULL,
+      seeding_minutes INTEGER NOT NULL DEFAULT 0,
+      play_minutes INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (steam_id, activity_date)
+    )
+  `);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS seeding_rewards (
@@ -248,15 +265,16 @@ function getClanByName(name) {
   return get('SELECT * FROM clans WHERE name = ?', [name]);
 }
 
-function createClan(name, playerLimit) {
-  return run('INSERT INTO clans (name, player_limit) VALUES (?, ?)', [name, playerLimit]);
+function createClan(name, playerLimit, whitelistEnabled = 1) {
+  return run('INSERT INTO clans (name, player_limit, whitelist_enabled) VALUES (?, ?, ?)', [name, playerLimit, whitelistEnabled ? 1 : 0]);
 }
 
-function updateClan(name, playerLimit, id) {
-  return run('UPDATE clans SET name = ?, player_limit = ? WHERE id = ?', [name, playerLimit, id]);
+function updateClan(name, playerLimit, whitelistEnabled, id) {
+  return run('UPDATE clans SET name = ?, player_limit = ?, whitelist_enabled = ? WHERE id = ?', [name, playerLimit, whitelistEnabled ? 1 : 0, id]);
 }
 
 function deleteClan(id) {
+  deletePlayersByClan(id);
   return run('DELETE FROM clans WHERE id = ?', [id]);
 }
 
@@ -266,13 +284,57 @@ function getClanPlayerCount(clanId) {
 
 function getPlayerCountByClan() {
   return all(`
-    SELECT c.id, c.name, c.player_limit, COUNT(DISTINCT p.id) as player_count,
+    SELECT c.id, c.name, c.player_limit, c.whitelist_enabled, COUNT(DISTINCT p.id) as player_count,
            COALESCE(SUM(sp.lifetime_points), 0) as total_seeding_minutes,
-           COALESCE(SUM(sp.play_minutes), 0) as total_play_minutes
+           COALESCE(SUM(sp.play_minutes), 0) as total_play_minutes,
+           COALESCE(SUM(sad.seeding_minutes), 0) as seeding_minutes_7d,
+           COALESCE(SUM(sad.play_minutes), 0) as play_minutes_7d
     FROM clans c LEFT JOIN players p ON c.id = p.clan_id
     LEFT JOIN seeding_points sp ON p.steam_id = sp.steam_id
+    LEFT JOIN (
+      SELECT steam_id, SUM(seeding_minutes) as seeding_minutes, SUM(play_minutes) as play_minutes
+      FROM player_activity_daily
+      WHERE activity_date >= date('now', '-6 days')
+      GROUP BY steam_id
+    ) sad ON p.steam_id = sad.steam_id
     GROUP BY c.id ORDER BY c.name
   `);
+}
+
+function getRecentActivityDates(days = 7) {
+  const dates = [];
+  const today = new Date();
+  const utcToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(utcToday);
+    date.setUTCDate(date.getUTCDate() - i);
+    dates.push(date.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+function getClanDailyActivity(clanId, days = 7) {
+  const dates = getRecentActivityDates(days);
+  const rows = all(`
+    SELECT sad.activity_date,
+           SUM(sad.seeding_minutes) as seeding_minutes,
+           SUM(sad.play_minutes) as play_minutes
+    FROM players p
+    JOIN player_activity_daily sad ON p.steam_id = sad.steam_id
+    WHERE p.clan_id = ?
+      AND sad.activity_date >= date('now', ?)
+    GROUP BY sad.activity_date
+    ORDER BY sad.activity_date
+  `, [clanId, `-${days - 1} days`]);
+  const byDate = new Map(rows.map(row => [row.activity_date, row]));
+  return dates.map(date => {
+    const row = byDate.get(date);
+    return {
+      activity_date: date,
+      seeding_minutes: row ? row.seeding_minutes : 0,
+      play_minutes: row ? row.play_minutes : 0
+    };
+  });
 }
 
 function getManagersByClan() {
@@ -302,7 +364,25 @@ function getStandalonePlayer(steamId) {
   return get('SELECT * FROM players WHERE steam_id = ? AND clan_id IS NULL', [steamId]);
 }
 
+function getClanPlayerBySteamId(steamId) {
+  return get(`
+    SELECT p.*, c.name as clan_name
+    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    WHERE p.steam_id = ? AND p.clan_id IS NOT NULL
+    LIMIT 1
+  `, [steamId]);
+}
+
 function createPlayer(steamId, playerName, clanId, expiresAt, note, createdBy) {
+  if (clanId) {
+    const existing = getClanPlayerBySteamId(steamId);
+    if (existing) {
+      const err = new Error('Player already belongs to a clan');
+      err.code = 'PLAYER_ALREADY_IN_CLAN';
+      err.clanName = existing.clan_name;
+      throw err;
+    }
+  }
   return run('INSERT INTO players (steam_id, player_name, clan_id, expires_at, note, created_by) VALUES (?, ?, ?, ?, ?, ?)',
     [steamId, playerName, clanId, expiresAt, note, createdBy]);
 }
@@ -315,6 +395,10 @@ function deletePlayer(id) {
   return run('DELETE FROM players WHERE id = ?', [id]);
 }
 
+function deletePlayersByClan(clanId) {
+  return run('DELETE FROM players WHERE clan_id = ?', [clanId]);
+}
+
 function deleteExpiredPlayers() {
   return run("DELETE FROM players WHERE expires_at IS NOT NULL AND expires_at <= datetime('now')");
 }
@@ -323,7 +407,8 @@ function getActivePlayersForWhitelist() {
   return all(`
     SELECT p.steam_id, p.player_name, p.expires_at, c.name as clan_name
     FROM players p LEFT JOIN clans c ON p.clan_id = c.id
-    WHERE p.expires_at IS NULL OR p.expires_at > datetime('now')
+    WHERE (p.expires_at IS NULL OR p.expires_at > datetime('now'))
+      AND (p.clan_id IS NULL OR c.whitelist_enabled = 1)
   `);
 }
 
@@ -340,6 +425,17 @@ function getSeedingPoints() {
     ORDER BY sp.lifetime_points DESC LIMIT 50`);
 }
 
+function incrementDailyActivity(steamId, seedingMinutes, playMinutes) {
+  return run(`
+    INSERT INTO player_activity_daily (steam_id, activity_date, seeding_minutes, play_minutes, updated_at)
+    VALUES (?, date('now'), ?, ?, datetime('now'))
+    ON CONFLICT(steam_id, activity_date) DO UPDATE SET
+      seeding_minutes = seeding_minutes + excluded.seeding_minutes,
+      play_minutes = play_minutes + excluded.play_minutes,
+      updated_at = datetime('now')
+  `, [steamId, seedingMinutes, playMinutes]);
+}
+
 function upsertSeedingPoints(steamId, playerName) {
   const existing = get('SELECT * FROM seeding_points WHERE steam_id = ?', [steamId]);
   if (existing) {
@@ -349,6 +445,7 @@ function upsertSeedingPoints(steamId, playerName) {
     run("INSERT INTO seeding_points (steam_id, player_name, points, lifetime_points, last_seen_at, updated_at) VALUES (?, ?, 1, 1, datetime('now'), datetime('now'))",
       [steamId, playerName]);
   }
+  incrementDailyActivity(steamId, 1, 0);
 }
 
 function upsertPlayTime(steamId, playerName) {
@@ -360,6 +457,7 @@ function upsertPlayTime(steamId, playerName) {
     run("INSERT INTO seeding_points (steam_id, player_name, points, lifetime_points, play_minutes, last_seen_at, updated_at) VALUES (?, ?, 0, 0, 1, datetime('now'), datetime('now'))",
       [steamId, playerName]);
   }
+  incrementDailyActivity(steamId, 0, 1);
 }
 
 function getSeedingPointsForPlayer(steamId) {
@@ -390,6 +488,10 @@ function deleteSeedingReward(id) {
 
 function deleteExpiredSeedingRewards() {
   return run("DELETE FROM seeding_rewards WHERE expires_at <= datetime('now')");
+}
+
+function deleteOldDailyActivity() {
+  return run("DELETE FROM player_activity_daily WHERE activity_date < date('now', '-90 days')");
 }
 
 function getClanSeedingLeaderboard() {
@@ -484,12 +586,23 @@ function getClanDashboardStats(clanId) {
   const clan = getClan(clanId);
   const seedingAgg = get(`
     SELECT COALESCE(SUM(sp.lifetime_points), 0) as total_seeding,
-           COALESCE(SUM(sp.play_minutes), 0) as total_play
-    FROM players p JOIN seeding_points sp ON p.steam_id = sp.steam_id
+           COALESCE(SUM(sp.play_minutes), 0) as total_play,
+           COALESCE(SUM(sad.seeding_minutes), 0) as seeding_7d,
+           COALESCE(SUM(sad.play_minutes), 0) as play_7d
+    FROM players p
+    LEFT JOIN seeding_points sp ON p.steam_id = sp.steam_id
+    LEFT JOIN (
+      SELECT steam_id, SUM(seeding_minutes) as seeding_minutes, SUM(play_minutes) as play_minutes
+      FROM player_activity_daily
+      WHERE activity_date >= date('now', '-6 days')
+      GROUP BY steam_id
+    ) sad ON p.steam_id = sad.steam_id
     WHERE p.clan_id = ?
   `, [clanId]);
   const totalSeedingMinutes = seedingAgg.total_seeding;
   const totalPlayMinutes = seedingAgg.total_play;
+  const seedingMinutes7d = seedingAgg.seeding_7d;
+  const playMinutes7d = seedingAgg.play_7d;
   const recentPlayers = all(`
     SELECT p.*, c.name as clan_name, COALESCE(sp.lifetime_points, 0) as lifetime_minutes,
            COALESCE(sp.play_minutes, 0) as play_minutes
@@ -498,7 +611,8 @@ function getClanDashboardStats(clanId) {
     WHERE p.clan_id = ?
     ORDER BY p.created_at DESC LIMIT 10
   `, [clanId]);
-  return { totalPlayers, clan, totalSeedingMinutes, totalPlayMinutes, recentPlayers };
+  const dailyActivity = getClanDailyActivity(clanId);
+  return { totalPlayers, clan, totalSeedingMinutes, totalPlayMinutes, seedingMinutes7d, playMinutes7d, dailyActivity, recentPlayers };
 }
 
 function createInvite(token, role, clanId, expiresAt, createdBy) {
@@ -534,7 +648,7 @@ function deleteInvite(id) {
 
 function resetAllTables() {
   db.run('PRAGMA foreign_keys = OFF');
-  const tables = ['players', 'users', 'sessions', 'seeding_points', 'seeding_rewards', 'invites', 'config', 'clans'];
+  const tables = ['players', 'users', 'sessions', 'seeding_points', 'player_activity_daily', 'seeding_rewards', 'invites', 'config', 'clans'];
   for (const table of tables) {
     try {
       db.run(`DELETE FROM ${table}`);
@@ -564,10 +678,10 @@ module.exports = {
   getUser, getUserByUsername, getSessionByToken, createSession, deleteSession, deleteExpiredSessions, deleteUserSessions,
   userCount, getAllUsers, createUser, updateUser, updateUserPassword, deleteUser,
   getAllClans, getClan, getClanByName, createClan, updateClan, deleteClan,
-  getClanPlayerCount, getPlayerCountByClan, getManagersByClan,
-  getAllPlayers, getPlayersByClan, getPlayer, getStandalonePlayer, createPlayer, updatePlayer, deletePlayer, deleteExpiredPlayers,
+  getClanPlayerCount, getPlayerCountByClan, getClanDailyActivity, getManagersByClan,
+  getAllPlayers, getPlayersByClan, getPlayer, getStandalonePlayer, getClanPlayerBySteamId, createPlayer, updatePlayer, deletePlayer, deletePlayersByClan, deleteExpiredPlayers,
   getActivePlayersForWhitelist, getActiveSeedingRewards,
-  getSeedingPoints, upsertSeedingPoints, upsertPlayTime, getSeedingPointsForPlayer, createSeedingReward, resetSeedingPoints, getSeedingReward, deleteSeedingReward, deleteExpiredSeedingRewards,
+  getSeedingPoints, incrementDailyActivity, upsertSeedingPoints, upsertPlayTime, getSeedingPointsForPlayer, createSeedingReward, resetSeedingPoints, getSeedingReward, deleteSeedingReward, deleteExpiredSeedingRewards, deleteOldDailyActivity,
   getConfigValue, setConfigValue,
   searchPlayers, searchSeedingPoints, getDashboardStats, getClanDashboardStats, getClanSeedingLeaderboard,
   createInvite, getInviteByToken, markInviteUsed, getPendingInvites, deleteInvite
