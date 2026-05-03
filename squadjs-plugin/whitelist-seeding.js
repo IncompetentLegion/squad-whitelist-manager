@@ -52,11 +52,25 @@ export default class WhitelistSeeding extends BasePlugin {
           name: p.name
         }));
 
-        await fetch(`${this.options.apiUrl}/${this.options.apiKey}`, {
+        const res = await fetch(`${this.options.apiUrl}/${this.options.apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ players })
         });
+
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.rewardedSteamIds && data.rewardedSteamIds.length > 0) {
+          for (const entry of data.rewardedSteamIds) {
+            try {
+              const dateStr = entry.expiresAt.split(' ')[0];
+              await this.server.rcon.execute(`AdminWarn ${entry.steamId} Congratulations, you're whitelisted until ${dateStr}! Keep seeding to extend.`);
+            } catch (err) {
+              this.verbose(1, `Whitelist notify error for ${entry.steamId}: ${err.message}`);
+            }
+          }
+        }
       } catch (err) {
         this.verbose(1, `Seeding report error: ${err.message}`);
       }
@@ -87,9 +101,12 @@ export default class WhitelistSeeding extends BasePlugin {
 
       let msg;
       if (data.has_reward) {
-        msg = `Seeding reward ACTIVE (expires ${data.reward_expires_at.split(' ')[0]}). Lifetime points: ${data.lifetime_points}`;
+        const dateStr = data.reward_expires_at.split(' ')[0];
+        msg = `Whitelisted until ${dateStr}. Keep seeding to extend.`;
       } else {
-        msg = `Seeding progress: ${data.points}/${data.points_needed} points toward next reward. Lifetime: ${data.lifetime_points}`;
+        const remaining = Math.max(0, data.points_needed - data.points);
+        if (remaining === 0) return;
+        msg = `Seeding: ${data.points}/${data.points_needed} min. ${remaining} min until whitelisted.`
       }
 
       await this.server.rcon.execute(`AdminWarn ${steamId} ${msg}`);
