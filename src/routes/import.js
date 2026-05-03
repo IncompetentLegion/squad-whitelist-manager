@@ -43,6 +43,11 @@ router.post('/', requireAuth, requireAdmin, verifyCsrf, (req, res) => {
       db.createSeedingReward(steamId, playerName, expiryStr);
       stats.seedersAdded++;
     } else {
+      if (db.getClanPlayerBySteamId(steamId)) {
+        stats.skipped++;
+        continue;
+      }
+
       let clan = db.getClanByName(tag);
       if (!clan) {
         db.createClan(tag, playerLimit);
@@ -53,7 +58,7 @@ router.post('/', requireAuth, requireAdmin, verifyCsrf, (req, res) => {
         db.createPlayer(steamId, playerName, clan.id, null, null, null);
         stats.playersAdded++;
       } catch (e) {
-        // UNIQUE constraint violation — duplicate steam_id+clan_id
+        // Duplicate or conflicting player row.
         stats.skipped++;
       }
     }

@@ -80,7 +80,17 @@ router.post('/', requireAuth, verifyCsrf, (req, res) => {
 
   if (clan_id) {
     const clan = db.getClan(clan_id);
-    if (clan && clan.player_limit > 0) {
+    if (!clan) {
+      return res.redirect('/players?error=Clan not found');
+    }
+
+    const existingClanPlayer = db.getClanPlayerBySteamId(steam_id);
+    if (existingClanPlayer) {
+      const clanName = existingClanPlayer.clan_name || 'another clan';
+      return res.redirect(`/players?error=${encodeURIComponent(`Player already belongs to clan ${clanName}`)}`);
+    }
+
+    if (clan.player_limit > 0) {
       const count = db.getClanPlayerCount(clan_id).count;
       if (count >= clan.player_limit) {
         return res.redirect('/players?error=Clan player limit reached');
@@ -100,6 +110,10 @@ router.post('/', requireAuth, verifyCsrf, (req, res) => {
     invalidateCache();
     res.redirect('/players');
   } catch (err) {
+    if (err.code === 'PLAYER_ALREADY_IN_CLAN') {
+      const clanName = err.clanName || 'another clan';
+      return res.redirect(`/players?error=${encodeURIComponent(`Player already belongs to clan ${clanName}`)}`);
+    }
     res.redirect('/players?error=Player already exists in this clan');
   }
 });

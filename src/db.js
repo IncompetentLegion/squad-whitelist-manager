@@ -274,6 +274,7 @@ function updateClan(name, playerLimit, whitelistEnabled, id) {
 }
 
 function deleteClan(id) {
+  deletePlayersByClan(id);
   return run('DELETE FROM clans WHERE id = ?', [id]);
 }
 
@@ -363,7 +364,25 @@ function getStandalonePlayer(steamId) {
   return get('SELECT * FROM players WHERE steam_id = ? AND clan_id IS NULL', [steamId]);
 }
 
+function getClanPlayerBySteamId(steamId) {
+  return get(`
+    SELECT p.*, c.name as clan_name
+    FROM players p LEFT JOIN clans c ON p.clan_id = c.id
+    WHERE p.steam_id = ? AND p.clan_id IS NOT NULL
+    LIMIT 1
+  `, [steamId]);
+}
+
 function createPlayer(steamId, playerName, clanId, expiresAt, note, createdBy) {
+  if (clanId) {
+    const existing = getClanPlayerBySteamId(steamId);
+    if (existing) {
+      const err = new Error('Player already belongs to a clan');
+      err.code = 'PLAYER_ALREADY_IN_CLAN';
+      err.clanName = existing.clan_name;
+      throw err;
+    }
+  }
   return run('INSERT INTO players (steam_id, player_name, clan_id, expires_at, note, created_by) VALUES (?, ?, ?, ?, ?, ?)',
     [steamId, playerName, clanId, expiresAt, note, createdBy]);
 }
@@ -374,6 +393,10 @@ function updatePlayer(playerName, expiresAt, note, id) {
 
 function deletePlayer(id) {
   return run('DELETE FROM players WHERE id = ?', [id]);
+}
+
+function deletePlayersByClan(clanId) {
+  return run('DELETE FROM players WHERE clan_id = ?', [clanId]);
 }
 
 function deleteExpiredPlayers() {
@@ -465,6 +488,10 @@ function deleteSeedingReward(id) {
 
 function deleteExpiredSeedingRewards() {
   return run("DELETE FROM seeding_rewards WHERE expires_at <= datetime('now')");
+}
+
+function deleteOldDailyActivity() {
+  return run("DELETE FROM player_activity_daily WHERE activity_date < date('now', '-90 days')");
 }
 
 function getClanSeedingLeaderboard() {
@@ -652,9 +679,9 @@ module.exports = {
   userCount, getAllUsers, createUser, updateUser, updateUserPassword, deleteUser,
   getAllClans, getClan, getClanByName, createClan, updateClan, deleteClan,
   getClanPlayerCount, getPlayerCountByClan, getClanDailyActivity, getManagersByClan,
-  getAllPlayers, getPlayersByClan, getPlayer, getStandalonePlayer, createPlayer, updatePlayer, deletePlayer, deleteExpiredPlayers,
+  getAllPlayers, getPlayersByClan, getPlayer, getStandalonePlayer, getClanPlayerBySteamId, createPlayer, updatePlayer, deletePlayer, deletePlayersByClan, deleteExpiredPlayers,
   getActivePlayersForWhitelist, getActiveSeedingRewards,
-  getSeedingPoints, incrementDailyActivity, upsertSeedingPoints, upsertPlayTime, getSeedingPointsForPlayer, createSeedingReward, resetSeedingPoints, getSeedingReward, deleteSeedingReward, deleteExpiredSeedingRewards,
+  getSeedingPoints, incrementDailyActivity, upsertSeedingPoints, upsertPlayTime, getSeedingPointsForPlayer, createSeedingReward, resetSeedingPoints, getSeedingReward, deleteSeedingReward, deleteExpiredSeedingRewards, deleteOldDailyActivity,
   getConfigValue, setConfigValue,
   searchPlayers, searchSeedingPoints, getDashboardStats, getClanDashboardStats, getClanSeedingLeaderboard,
   createInvite, getInviteByToken, markInviteUsed, getPendingInvites, deleteInvite

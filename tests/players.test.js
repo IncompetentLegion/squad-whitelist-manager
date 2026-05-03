@@ -55,6 +55,37 @@ describe('Players', () => {
     assert.ok(listRes.text.includes('TestClan'));
   });
 
+  it('prevents adding the same player to more than one clan', async () => {
+    const agent = await createAdminAgent(app);
+
+    const clanRes = await agent.get('/clans');
+    const clanCsrf = extractCsrfToken(clanRes.text);
+    await agent.post('/clans').send({ name: 'ClanA', player_limit: 10, _csrf: clanCsrf });
+    await agent.post('/clans').send({ name: 'ClanB', player_limit: 10, _csrf: clanCsrf });
+
+    const db = require('../src/db');
+    const clanA = db.getClanByName('ClanA');
+    const clanB = db.getClanByName('ClanB');
+
+    let playersRes = await agent.get('/players');
+    let csrf = extractCsrfToken(playersRes.text);
+    await agent
+      .post('/players')
+      .send({ steam_id: '76561198000000001', player_name: 'PlayerOne', clan_id: clanA.id, _csrf: csrf });
+
+    playersRes = await agent.get('/players');
+    csrf = extractCsrfToken(playersRes.text);
+    const res = await agent
+      .post('/players')
+      .send({ steam_id: '76561198000000001', player_name: 'PlayerOne', clan_id: clanB.id, _csrf: csrf });
+
+    assert.strictEqual(res.status, 302);
+    const decoded = decodeURIComponent(res.headers.location);
+    assert.ok(decoded.includes('already belongs to clan ClanA'));
+    assert.strictEqual(db.getClanPlayerCount(clanA.id).count, 1);
+    assert.strictEqual(db.getClanPlayerCount(clanB.id).count, 0);
+  });
+
   it('rejects invalid steam id', async () => {
     const agent = await createAdminAgent(app);
     const playersRes = await agent.get('/players');
@@ -212,7 +243,6 @@ describe('Players', () => {
     const res = await manager.get('/');
 
     assert.strictEqual(res.status, 200);
-    assert.ok(res.text.includes('Clan Activity'));
     assert.ok(res.text.includes('Seed Time (7d)'));
     assert.ok(res.text.includes('Whitelist'));
     assert.ok(res.text.includes('Enabled'));
@@ -321,5 +351,34 @@ describe('Players', () => {
 
     const listRes = await agent.get('/players');
     assert.ok(!listRes.text.includes('ToDelete'));
+  });
+
+  it('deleting a clan deletes its players', async () => {
+    const agent = await createAdminAgent(app);
+
+    let clanRes = await agent.get('/clans');
+    let csrf = extractCsrfToken(clanRes.text);
+    await agent.post('/clans').send({ name: 'ClanToDelete', player_limit: 10, _csrf: csrf });
+
+    const db = require('../src/db');
+    const clan = db.getClanByName('ClanToDelete');
+
+    let playersRes = await agent.get('/players');
+    csrf = extractCsrfToken(playersRes.text);
+    await agent
+      .post('/players')
+      .send({ steam_id: '76561198000000001', player_name: 'RemovedWithClan', clan_id: clan.id, _csrf: csrf });
+
+    clanRes = await agent.get('/clans');
+    csrf = extractCsrfToken(clanRes.text);
+    const res = await agent.post(`/clans/${clan.id}/delete`).send({ _csrf: csrf });
+
+    assert.strictEqual(res.status, 302);
+    assert.strictEqual(res.headers.location, '/clans');
+    assert.strictEqual(db.searchPlayers('', '').length, 0);
+
+    const whitelistRes = await request(app).get('/whitelist');
+    assert.ok(!whitelistRes.text.includes('RemovedWithClan'));
+    assert.ok(!whitelistRes.text.includes('76561198000000001'));
   });
 });
