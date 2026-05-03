@@ -115,6 +115,7 @@ describe('API & External Endpoints', () => {
       assert.strictEqual(res.body.ok, true);
       assert.strictEqual(res.body.processed, 1);
       assert.strictEqual(res.body.rewardsCreated, 0);
+      assert.deepStrictEqual(res.body.rewardedSteamIds, []);
 
       const points = db.getSeedingPointsForPlayer('76561198000000001');
       assert.strictEqual(points.points, 1);
@@ -213,6 +214,9 @@ describe('API & External Endpoints', () => {
       // 3rd report - reward created
       const res = await request(app).post('/seeding/report/testkey').send({ players });
       assert.strictEqual(res.body.rewardsCreated, 1);
+      assert.strictEqual(res.body.rewardedSteamIds.length, 1);
+      assert.strictEqual(res.body.rewardedSteamIds[0].steamId, '76561198000000001');
+      assert.ok(res.body.rewardedSteamIds[0].expiresAt);
 
       pts = db.getSeedingPointsForPlayer('76561198000000001');
       assert.strictEqual(pts.points, 0);

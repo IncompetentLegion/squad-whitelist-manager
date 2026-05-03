@@ -112,6 +112,7 @@ router.post('/report/:apiKey', (req, res) => {
   const pointsNeeded = db.getConfigValue('seeding_points_needed', 60);
   const rewardDays = db.getConfigValue('seeding_reward_days', 7);
   let rewardsCreated = 0;
+  const rewardedSteamIds = [];
 
   for (const p of players) {
     if (!p.steamId) continue;
@@ -126,6 +127,7 @@ router.post('/report/:apiKey', (req, res) => {
         db.createSeedingReward(p.steamId, p.name || null, expiryStr);
         db.resetSeedingPoints(p.steamId);
         rewardsCreated++;
+        rewardedSteamIds.push({ steamId: p.steamId, expiresAt: expiryStr });
       }
     } catch (err) {
       continue;
@@ -136,7 +138,7 @@ router.post('/report/:apiKey', (req, res) => {
     invalidateCache();
   }
 
-  res.json({ ok: true, processed: players.length, rewardsCreated, playTimeTracked });
+  res.json({ ok: true, processed: players.length, rewardsCreated, rewardedSteamIds, playTimeTracked });
 });
 
 // API endpoint: get player seeding progress
